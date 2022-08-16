@@ -6,7 +6,9 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from ..database import TagDB, WarnDB
+from ..database.db import RepCooldownDB
+
+from ..database import TagDB, WarnDB, RepDB
 
 load_dotenv()
 
@@ -35,9 +37,13 @@ class HelperBot(commands.Bot):
         )
         self.warn_db = WarnDB()
         self.tag_db = TagDB()
-        self.launch_time = discord.utils.utcnow()
+        self.rep_db = RepDB()
+        self.rep_cd_db = RepCooldownDB()
         await self.tag_db.setup(self)
         await self.warn_db.setup(self)
+        await self.rep_db.setup(self)
+        await self.rep_cd_db.setup(self)
+        self.launch_time = discord.utils.utcnow()
         [
             await self.load_extension(f"Helper.extensions.{file[:-3]}")
             for file in os.listdir("Helper/extensions")
