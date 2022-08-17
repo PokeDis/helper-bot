@@ -54,6 +54,7 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         brief="Give +1 rep to a member",
         help="Give +1 rep to a member."
         )
+    @commands.cooldown(1, 120, commands.BucketType.user)
     @commands.guild_only()
     async def giverep(self, ctx: commands.Context, member: discord.Member) -> None:
         embed = discord.Embed(
@@ -154,7 +155,7 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         data = await self.bot.rep_cd_db.exec_fetchall("SELECT * FROM repcooldown")
         for raw in data:
             if not raw[2]:
-                await self.bot.rep_cd_db.exec_write_query("DELETE FROM repcooldown member_a_id = $1", (raw[0],))
+                await self.bot.rep_cd_db.exec_write_query("DELETE FROM repcooldown WHERE member_a_id = $1", (raw[0],))
                 continue
             for time in raw[2]:
                 diff = datetime.now() - datetime.fromtimestamp(time)
