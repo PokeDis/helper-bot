@@ -205,7 +205,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
     async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
         data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
         if not data or not data[3]:
-            return await ctx.send("Bro's a saint. :ok_hand:")
+            embed3 = discord.Embed(
+                title=":mag:  Hmm...",
+                description=f"> It seems the member has a clean record.",
+                color=0x2F3136)
+            return await ctx.send(embed=embed3)
         embed = discord.Embed(
             title=f"{member.name}'s Misdeeds",
             description=f"Total Warns: `{len(data[2])}`",
@@ -227,7 +231,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
     async def deletewarn(self, ctx: commands.Context, member: discord.Member, warn_id: float) -> None:
         data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
         if not data:
-            return await ctx.send("Bro's a saint. :ok_hand:")
+            embed3 = discord.Embed(
+                title=":mag:  Hmm...",
+                description=f"> It seems the member has a clean record.",
+                color=0x2F3136)
+            return await ctx.send(embed=embed3)
         if data[3] and warn_id in data[3]:
             index = data[3].index(warn_id)
             embed1 = discord.Embed(
@@ -253,8 +261,10 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
                 await self.bot.warn_db.exec_write_query("DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2", (raw[0], raw[1],))
                 continue
             for time in raw[3]:
-                diff = datetime.utcnow() - datetime.fromtimestamp(time)
-                if diff.days >= 62:
+                diff = datetime.now() - datetime.fromtimestamp(time)
+                clear_after = 5260000 - round(diff.total_seconds())
+                clear_at = datetime.now() + timedelta(seconds=clear_after)
+                if datetime.now() >= clear_at:
                     index = raw[3].index(time)
                     if len(raw[3]) > 1:
                         await self.bot.warn_db.exec_write_query("DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2", (raw[0], raw[1],))
@@ -279,7 +289,7 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
             if isinstance(error, (discord.errors.Forbidden, Moderation.HierarchyIssues)): # Handles hierarchy issues
                 embed = discord.Embed(
                     title="<a:_:1000851617182142535>  Error!",
-                    description="Get `H I E R A R C H Y`'d\n> That user is a mod/admin",
+                    description="> That user is a mod/admin",
                     color=0x2F3136)
                 await ctx.send(embed=embed)
             elif isinstance(error, (discord.errors.NotFound, Moderation.PunishmentIssues)): # Handles punishment issues

@@ -3,7 +3,7 @@ import random
 import humanfriendly
 
 from discord.ext import commands, tasks
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from ..main import HelperBot
@@ -148,8 +148,10 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
                 await self.bot.rep_cd_db.exec_write_query("DELETE FROM repcooldown member_a_id = $1", (raw[0],))
                 continue
             for time in raw[2]:
-                diff = datetime.utcnow() - datetime.fromtimestamp(time)
-                if diff.seconds >= 6600:
+                diff = datetime.now() - datetime.fromtimestamp(time)
+                clear_after = 6600 - round(diff.total_seconds())
+                clear_at = datetime.now() + timedelta(seconds=clear_after)
+                if datetime.now() >= clear_at:
                     index = raw[2].index(time)
                     if len(raw[2]) > 1:
                         await self.bot.rep_cd_db.exec_write_query("DELETE FROM repcooldown WHERE member_a_id = $1", (raw[0],))
