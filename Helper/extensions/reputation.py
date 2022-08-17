@@ -2,6 +2,7 @@ import discord
 import random
 import humanfriendly
 
+from discord import app_commands
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 from typing import Optional
@@ -29,10 +30,11 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         self.clean_rep_cd.start()
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Check your/others rep",
         help="Check your/others rep."
         )
+    @commands.guild_only()
     async def rep(self, ctx: commands.Context, member: Optional[discord.Member]) -> None:
         member = member or ctx.author
         embed = discord.Embed(
@@ -48,10 +50,11 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         await ctx.send(embed=embed)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Give +1 rep to a member",
         help="Give +1 rep to a member."
         )
+    @commands.guild_only()
     async def giverep(self, ctx: commands.Context, member: discord.Member) -> None:
         embed = discord.Embed(
             title="<a:_:1000859478217994410>  Success",
@@ -97,10 +100,13 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         await ctx.send(embed=embed)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Reset a members rep to 0",
         help="Reset a members rep to 0."
         )
+    @app_commands.default_permissions(manage_messages=True)
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def repclear(self, ctx: commands.Context, member: discord.Member) -> None:
         embed = discord.Embed(
             title="<a:_:1000859478217994410>  Success",
@@ -114,10 +120,13 @@ class Reputation(commands.Cog, description="Reputation may be used to determine 
         await ctx.send(embed=embed)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Remove -1 rep from a member",
         help="Remove -1 rep from a member."
         )
+    @app_commands.default_permissions(manage_messages=True)
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def takerep(self, ctx: commands.Context, member: discord.Member) -> None:
         embed1 = discord.Embed(
             title="<a:_:1000859478217994410>  Success",

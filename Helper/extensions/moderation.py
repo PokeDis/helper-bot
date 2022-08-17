@@ -1,6 +1,7 @@
 import discord
 import humanfriendly
 
+from discord import app_commands
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 from typing import Optional, Union
@@ -24,10 +25,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
     # - - - - - - - - - - - - - - - - -
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Mute a member so they cannot type",
         help="Mute a member so they cannot type."
         )
+    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def mute(self, ctx: commands.Context, member: discord.Member, time: Optional[DurationCoverter] = None, *, reason: Optional[str] = None) -> None:
@@ -60,10 +62,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
             raise Moderation.HierarchyIssues("egg")
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Unmute a member",
         help="Unmute a member."
-        )
+    )
+    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member) -> None:
@@ -79,10 +82,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
             raise Moderation.PunishmentIssues("egg")
 
     
-    @commands.command(
+    @commands.hybrid_command(
         brief="Kick a member",
         help="Kick a member."
         )
+    @app_commands.default_permissions(kick_members=True)
     @commands.has_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: Optional[str] = None) -> None:
@@ -98,10 +102,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
             raise Moderation.HierarchyIssues("egg")
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Ban a member",
         help="Ban a member."
         )
+    @app_commands.default_permissions(ban_members=True)
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx: commands.Context, member: Union[discord.Member, discord.User], *, reason: Optional[str] = None) -> None:
@@ -117,10 +122,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
             raise Moderation.HierarchyIssues("egg")
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Unban a member",
         help="Unban a member."
         )
+    @app_commands.default_permissions(ban_members=True)
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(self, ctx: commands.Context, member: Union[discord.User, discord.Member], *, reason: Optional[str] = None) -> None:
@@ -133,10 +139,11 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
         await ctx.send(embed=embed1)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Enable or disable slowmode on a channel",
         help="Enable or disable slowmode on a channel."
         )
+    @app_commands.default_permissions(manage_channels=True)
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def slowmode(self, ctx: commands.Context, time: DurationCoverter, *, reason: Optional[str] = None) -> None:
@@ -166,11 +173,13 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
 
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BETA TEST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    @commands.command(
+    @commands.hybrid_command(
         brief="Warn a member",
         help="Warn a member."
         )
+    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: Optional[str] = None) -> None:
         if (member == ctx.author or member == ctx.guild.owner or member == self.bot.user) or (ctx.author.top_role < member.top_role):
             raise Moderation.HierarchyIssues("egg")
@@ -197,11 +206,13 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
                 pass
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Get warnings for a member",
         help="Get warnings for a member."
         )
+    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
         data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
         if not data or not data[3]:
@@ -222,12 +233,14 @@ class Moderation(commands.Cog, description="Used to manage server and belt sinne
         await ctx.send(embed=embed)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Clear a single warning from a member",
         help="Clear a single warning from a member.",
         aliases=["dw", "rw", "removewarn"]
         )
+    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def deletewarn(self, ctx: commands.Context, member: discord.Member, warn_id: float) -> None:
         data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
         if not data:

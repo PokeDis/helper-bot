@@ -23,10 +23,11 @@ class Tag(commands.Cog, description="Tag related commands.\n`<input>` are mandat
         self.bot = bot
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Tag to display",
         help="Tag to display."
         )
+    @commands.guild_only()
     async def tag(self, ctx: commands.Context, name: str) -> None:
         if not (tag_data := await self.bot.tag_db.get_tag(name)):
             return await ctx.send("No such tag found.")
@@ -34,11 +35,12 @@ class Tag(commands.Cog, description="Tag related commands.\n`<input>` are mandat
         await ctx.send(tag_data[2])
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Add a new tag",
         help="Create a new tag.",
         aliases=["ta", "tagcreate", "tc"]
         )
+    @commands.guild_only()
     async def tagadd(self, ctx: commands.Context, name: str, content: str) -> None:
         if await self.bot.tag_db.get_tag(name):
             embed1 = discord.Embed(
@@ -57,11 +59,12 @@ class Tag(commands.Cog, description="Tag related commands.\n`<input>` are mandat
         await ctx.send(embed=embed2)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Delete an existing tag",
         help="Delete an existing tag.",
         aliases=["td", "tagdelete"]
         )
+    @commands.guild_only()
     async def tagdel(self, ctx: commands.Context, tag: str) -> None:
         if not (tag_data := await self.bot.tag_db.get_tag(tag)):
             embed1 = discord.Embed(
@@ -83,11 +86,12 @@ class Tag(commands.Cog, description="Tag related commands.\n`<input>` are mandat
         await ctx.send(embed=embed2)
 
 
-    @commands.command(
+    @commands.hybrid_command(
         brief="Edit an existing tag",
         help="Edit an existing tag.",
         aliases=["tu", "tagedit", "te"]
         )
+    @commands.guild_only()
     async def tagupdate(self, ctx: commands.Context, name: str, content: str) -> None:
         if not (tag_data := await self.bot.tag_db.get_tag(name)):
             embed1 = discord.Embed(
