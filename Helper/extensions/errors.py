@@ -1,9 +1,9 @@
 import random
 import traceback
-import discord
-
-from discord.ext import commands
 from io import BytesIO
+
+import discord
+from discord.ext import commands
 
 
 class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
@@ -34,7 +34,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error: Exception):
-        if hasattr(ctx, 'error_handled'):
+        if hasattr(ctx, "error_handled"):
             return
 
         if isinstance(error, commands.CommandNotFound):
@@ -134,7 +134,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                     color=0x2F3136,
                 )
             )
-        
+
         elif isinstance(error, commands.MissingAnyRole):
             roles = ""
             for roleID in error.missing_roles:
@@ -170,7 +170,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                 embed=discord.Embed(
                     title="<a:_:1000851617182142535>  Error!",
                     description="This command is disabled",
-                    color=0x2F3136
+                    color=0x2F3136,
                 )
             )
 
@@ -203,7 +203,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             error_type = type(error)
             error_trace = error.__traceback__
             error_lines = traceback.format_exception(error_type, error, error_trace)
-            strange_error = ''.join(error_lines)
+            strange_error = "".join(error_lines)
             buffer = BytesIO(strange_error.encode("utf8"))
             channel = self.bot.get_user(730271192778539078)
             await channel.send(file=discord.File(fp=buffer, filename="error.txt"))

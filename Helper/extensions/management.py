@@ -1,7 +1,7 @@
-import discord
+from typing import Literal, Optional
 
+import discord
 from discord.ext import commands
-from typing import Optional, Literal
 
 from ..main import HelperBot
 
@@ -9,7 +9,6 @@ from ..main import HelperBot
 class Management(commands.Cog, description="Tag related commands."):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
-
 
     @commands.command()
     async def droptags(self, ctx: commands.Context) -> None:
@@ -19,7 +18,11 @@ class Management(commands.Cog, description="Tag related commands."):
     @commands.command()
     @commands.guild_only()
     async def sync(
-    self, ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
+        self,
+        ctx: commands.Context,
+        guilds: commands.Greedy[discord.Object],
+        spec: Optional[Literal["~", "*", "^"]] = None,
+    ) -> None:
         if not guilds:
             if spec == "~":
                 synced = await self.bot.tree.sync(guild=ctx.guild)

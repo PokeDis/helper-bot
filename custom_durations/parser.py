@@ -1,6 +1,6 @@
-from custom_durations.scales import Scale
 from custom_durations.constants import *
-from custom_durations.exceptions import ScaleFormatError, InvalidTokenError
+from custom_durations.exceptions import InvalidTokenError, ScaleFormatError
+from custom_durations.scales import Scale
 
 
 def valid_token(token):
@@ -48,9 +48,7 @@ def extract_tokens(representation, separators=SEPARATOR_CHARACTERS):
             last_token = None
         else:
             token = compute_char_token(c)
-            if token is not None \
-                    and last_token is not None \
-                    and token != last_token:
+            if token is not None and last_token is not None and token != last_token:
                 elements.append(buff)
                 buff = c
             else:

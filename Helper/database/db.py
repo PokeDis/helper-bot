@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+
 from discord.ext import commands
 
 from .postgre import DatabaseModel
@@ -32,7 +33,7 @@ class TagDB(DatabaseModel):
     async def delete_tag(self, name: str) -> None:
         await self.exec_write_query("DELETE FROM tags WHERE name = $1", (name,))
 
-    async def get_tag(self, tag: str) -> tuple:   
+    async def get_tag(self, tag: str) -> tuple:
         data = await self.exec_fetchone("SELECT * FROM tags WHERE name = $1", (tag,))
         return data
 
@@ -44,7 +45,7 @@ class TagDB(DatabaseModel):
                 name,
             ),
         )
-        
+
 
 class WarnDB(DatabaseModel):
     async def setup(self, bot: commands.Bot) -> None:
@@ -55,8 +56,12 @@ class WarnDB(DatabaseModel):
 
     async def warn_log(self, guild_id: int, member_id: int) -> list:
         data = await self.exec_fetchone(
-            "SELECT * FROM warnlogs WHERE guild_id = $1 AND member_id = $2", (guild_id, member_id,)
-            )
+            "SELECT * FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
+            (
+                guild_id,
+                member_id,
+            ),
+        )
         return data or []
 
     async def remove_warn(self, guild_id: int, member_id: int, index: int) -> None:
@@ -65,18 +70,36 @@ class WarnDB(DatabaseModel):
             data[2].remove(data[2][index])
             data[3].remove(data[3][index])
             await self.exec_write_query(
-                "UPDATE warnlogs SET warns = $1, times = $2 WHERE guild_id = $3 AND member_id = $4", (data[2], data[3], guild_id, member_id,)
+                "UPDATE warnlogs SET warns = $1, times = $2 WHERE guild_id = $3 AND member_id = $4",
+                (
+                    data[2],
+                    data[3],
+                    guild_id,
+                    member_id,
+                ),
             )
         else:
             await self.exec_write_query(
-                "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2", (guild_id, member_id,)
+                "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
+                (
+                    guild_id,
+                    member_id,
+                ),
             )
 
-    async def warn_entry(self, guild_id: int, member_id: int, reason: str, time: datetime.timestamp) -> None:
+    async def warn_entry(
+        self, guild_id: int, member_id: int, reason: str, time: datetime.timestamp
+    ) -> None:
         data = await self.warn_log(guild_id, member_id)
         if not data:
             await self.exec_write_query(
-                "INSERT INTO warnlogs (guild_id, member_id, warns, times) VALUES ($1, $2, $3, $4)", (guild_id, member_id, [reason], [time],)
+                "INSERT INTO warnlogs (guild_id, member_id, warns, times) VALUES ($1, $2, $3, $4)",
+                (
+                    guild_id,
+                    member_id,
+                    [reason],
+                    [time],
+                ),
             )
             return
         warns = data[2]
@@ -88,7 +111,13 @@ class WarnDB(DatabaseModel):
             warns.append(reason)
             times.append(time)
         await self.exec_write_query(
-            "UPDATE warnlogs SET times = $1, warns = $2 WHERE guild_id = $3 AND member_id = $4", (times, warns, guild_id, member_id,)
+            "UPDATE warnlogs SET times = $1, warns = $2 WHERE guild_id = $3 AND member_id = $4",
+            (
+                times,
+                warns,
+                guild_id,
+                member_id,
+            ),
         )
 
 
@@ -109,10 +138,14 @@ class RepDB(DatabaseModel):
         )
 
     async def clear_rep(self, user_id: int) -> None:
-        await self.exec_write_query("DELETE FROM reputation WHERE user_id = $1", (user_id,))
+        await self.exec_write_query(
+            "DELETE FROM reputation WHERE user_id = $1", (user_id,)
+        )
 
-    async def get_rep(self, user_id: int) -> tuple:   
-        data = await self.exec_fetchone("SELECT * FROM reputation WHERE user_id = $1", (user_id,))
+    async def get_rep(self, user_id: int) -> tuple:
+        data = await self.exec_fetchone(
+            "SELECT * FROM reputation WHERE user_id = $1", (user_id,)
+        )
         return data or []
 
     async def update_rep(self, user_id: int, new_rep: int) -> None:
@@ -135,14 +168,21 @@ class RepCooldownDB(DatabaseModel):
     async def cd_log(self, member_id: int) -> list:
         data = await self.exec_fetchone(
             "SELECT * FROM repcooldown WHERE member_a_id = $1", (member_id,)
-            )
+        )
         return data or []
 
-    async def cd_entry(self, member_id: int, member_b_id: int, time: datetime.timestamp) -> None:
+    async def cd_entry(
+        self, member_id: int, member_b_id: int, time: datetime.timestamp
+    ) -> None:
         data = await self.cd_log(member_id)
         if not data:
             await self.exec_write_query(
-                "INSERT INTO repcooldown (member_a_id, member_b_ids, times) VALUES ($1, $2, $3)", (member_id, [member_b_id], [time],)
+                "INSERT INTO repcooldown (member_a_id, member_b_ids, times) VALUES ($1, $2, $3)",
+                (
+                    member_id,
+                    [member_b_id],
+                    [time],
+                ),
             )
             return
         member_b_ids = data[1]
@@ -154,5 +194,10 @@ class RepCooldownDB(DatabaseModel):
             member_b_ids.append(member_b_id)
             times.append(time)
         await self.exec_write_query(
-            "UPDATE repcooldown SET times = $1, member_b_ids = $2 WHERE member_a_id = $3", (times, member_b_ids, member_id,)
+            "UPDATE repcooldown SET times = $1, member_b_ids = $2 WHERE member_a_id = $3",
+            (
+                times,
+                member_b_ids,
+                member_id,
+            ),
         )

@@ -1,1 +1,1 @@
-from .db import TagDB, WarnDB, RepDB, RepCooldownDB
+from .db import RepCooldownDB, RepDB, TagDB, WarnDB

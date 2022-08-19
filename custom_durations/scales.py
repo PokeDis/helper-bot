@@ -13,7 +13,7 @@ class Scale(object):
         SCALE_HOUR,
         SCALE_MINUTE,
         SCALE_SECOND,
-        SCALE_MILLISECOND
+        SCALE_MILLISECOND,
     )
 
     SCALES_CONVERTION_UNITS = {
@@ -26,7 +26,7 @@ class Scale(object):
         SCALE_HOUR.short: SCALE_HOUR_CONVERSION_UNIT,
         SCALE_MINUTE.short: SCALE_MINUTE_CONVERSION_UNIT,
         SCALE_SECOND.short: SCALE_SECOND_CONVERSION_UNIT,
-        SCALE_MILLISECOND.short: SCALE_MILLISECOND_CONVERSION_UNIT
+        SCALE_MILLISECOND.short: SCALE_MILLISECOND_CONVERSION_UNIT,
     }
 
     def __init__(self, str_representation, *args, **kwargs):
@@ -34,7 +34,7 @@ class Scale(object):
         self.conversion_unit = self.SCALES_CONVERTION_UNITS[self.representation.short]
 
     def __str__(self):
-        return '<Scale {0}>'.format(self.representation.long_singular)
+        return "<Scale {0}>".format(self.representation.long_singular)
 
     def __repr__(self):
         return self.__str__()
@@ -43,4 +43,6 @@ class Scale(object):
         for scale in self.SCALES:
             if str_representation in scale:
                 return scale
-        raise ScaleFormatError("Unsupported scale format: {0}".format(str_representation))
+        raise ScaleFormatError(
+            "Unsupported scale format: {0}".format(str_representation)
+        )

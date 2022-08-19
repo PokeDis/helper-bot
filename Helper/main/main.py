@@ -6,9 +6,8 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from ..database import RepDB, TagDB, WarnDB
 from ..database.db import RepCooldownDB
-
-from ..database import TagDB, WarnDB, RepDB
 
 load_dotenv()
 
@@ -22,7 +21,7 @@ class HelperBot(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or("?"),
             intents=intents,
-            case_insensitive =True,
+            case_insensitive=True,
         )
 
     async def setup_hook(self) -> None:

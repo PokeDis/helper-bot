@@ -1,13 +1,13 @@
-import discord
-
-from discord.ext import commands
 from datetime import timedelta
 
+import discord
+from discord.ext import commands
 from reactionmenu import ViewButton, ViewMenu
+
 from custom_durations import Duration
 
 
-class Support():
+class Support:
     @staticmethod
     async def paginate(pages: list, context: commands.Context):
         menu = ViewMenu(context, menu_type=ViewMenu.TypeEmbed)
@@ -44,6 +44,7 @@ class Support():
         menu.add_button(ff)
         menu.show_page_director = False
         return await menu.start()
+
 
 class DurationCoverter(commands.Converter):
     async def convert(self, ctx: commands.Context, args: str) -> timedelta:

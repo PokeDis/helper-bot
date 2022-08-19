@@ -1,26 +1,21 @@
 from collections import namedtuple
 
+from custom_durations.constants import *
+from custom_durations.exceptions import ScaleFormatError
 from custom_durations.parser import extract_tokens
 from custom_durations.scales import Scale
-from custom_durations.exceptions import ScaleFormatError
-from custom_durations.constants import *
 
-
-DurationRepresentation = namedtuple(
-    'DurationRepresentation',
-    ['value', 'scale']
-)
+DurationRepresentation = namedtuple("DurationRepresentation", ["value", "scale"])
 
 
 class Duration(object):
-
     def __init__(self, representation, *args, **kwargs):
         self.representation = representation
         self.parsed_durations = self.parse(self.representation)
         self.seconds = self._compute_seconds_value()
 
     def __str__(self):
-        return '<Duration {0}>'.format(self.representation)
+        return "<Duration {0}>".format(self.representation)
 
     def __repr__(self):
         return self.__str__()
@@ -37,10 +32,13 @@ class Duration(object):
         elements = extract_tokens(representation)
 
         try:
-            scales = [DurationRepresentation(float(p[0]), Scale(p[1]))
-                      for p in elements]
+            scales = [
+                DurationRepresentation(float(p[0]), Scale(p[1])) for p in elements
+            ]
         except ValueError:
-            raise ScaleFormatError("Malformed duration representation: {0}".format(representation))
+            raise ScaleFormatError(
+                "Malformed duration representation: {0}".format(representation)
+            )
 
         return scales
 

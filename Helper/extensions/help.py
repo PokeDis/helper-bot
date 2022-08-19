@@ -3,8 +3,8 @@ from itertools import starmap
 import discord
 from discord.ext import commands, menus
 
-from ..utils.logistics import Support
 from ..main import HelperBot
+from ..utils.logistics import Support
 
 
 class HelpPageSource(menus.ListPageSource):
@@ -18,10 +18,7 @@ class HelpPageSource(menus.ListPageSource):
     def format_command_help(self, no, command):
         prefix = self.helpcommand.context.prefix
         name = command.qualified_name
-        signature = (str(command.signature)
-                     .lower()
-                     .replace("=none", "")
-                    )
+        signature = str(command.signature).lower().replace("=none", "")
         docs = command.short_doc or "Command is not documented."
         if signature:
             return f"> ‣ **{prefix}{name}** `{signature}` - {docs}"
@@ -29,11 +26,7 @@ class HelpPageSource(menus.ListPageSource):
             return f"> ‣ **{prefix}{name}** - {docs}"
 
     async def format_page(self, menu, entries, num, curr_page):
-        iterator = starmap(self.format_command_help,
-                           enumerate(entries,
-                                     start=1
-                                    )
-                          )
+        iterator = starmap(self.format_command_help, enumerate(entries, start=1))
         page_content = "\n".join(iterator)
         new_line_and_pgno = "\n" + f"Page {curr_page} of {num}"
         desc = ""
@@ -62,9 +55,18 @@ class HelpPageSource(menus.ListPageSource):
 class MyHelp(commands.MinimalHelpCommand):
     async def send_bot_help(self, mapping):
         filtered = lambda i: self.filter_commands(i, sort=False)
-        category_wise = {k: x for k, v in self.context.bot.cogs.items() if (x := await filtered(v.get_commands()))}
-        formatting = lambda x, y, num, z: HelpPageSource(x, self, y, cog_check=True).format_page(self, x, num, z)
-        category_formatter = [await formatting(v, k, len(category_wise), i) for i, (k, v) in enumerate(category_wise.items(), start=1)]
+        category_wise = {
+            k: x
+            for k, v in self.context.bot.cogs.items()
+            if (x := await filtered(v.get_commands()))
+        }
+        formatting = lambda x, y, num, z: HelpPageSource(
+            x, self, y, cog_check=True
+        ).format_page(self, x, num, z)
+        category_formatter = [
+            await formatting(v, k, len(category_wise), i)
+            for i, (k, v) in enumerate(category_wise.items(), start=1)
+        ]
         await Support().paginate(category_formatter, self.context)
 
     async def send_cog_help(self, cog):
@@ -92,8 +94,8 @@ class MyHelp(commands.MinimalHelpCommand):
         for chunk in chunks:
             embeds.append(
                 await HelpPageSource(
-                chunk, self, f"{group.qualified_name}"
-                ).format_page(self, chunk, len(chunks), len(embeds)+1)
+                    chunk, self, f"{group.qualified_name}"
+                ).format_page(self, chunk, len(chunks), len(embeds) + 1)
             )
         await Support().paginate(embeds, self.context)
 
@@ -103,7 +105,10 @@ class MyHelp(commands.MinimalHelpCommand):
             title=f"{cog.qualified_name.title()} Category",
         )
         embed.description = "*No such category found...*"
-        embed.set_footer(text=f"Requested by {self.context.author}", icon_url=self.context.author.display_avatar)
+        embed.set_footer(
+            text=f"Requested by {self.context.author}",
+            icon_url=self.context.author.display_avatar,
+        )
         await self.context.send(embed=embed)
 
     async def send_command_help(self, command):
@@ -121,7 +126,10 @@ class MyHelp(commands.MinimalHelpCommand):
         )
         if command.aliases:
             embed.add_field(name="Aliases", value=f"```{', '.join(command.aliases)}```")
-        embed.set_footer(text=f"Requested by {self.context.author}", icon_url=self.context.author.display_avatar)
+        embed.set_footer(
+            text=f"Requested by {self.context.author}",
+            icon_url=self.context.author.display_avatar,
+        )
         await self.context.send(embed=embed)
 
 

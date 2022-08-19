@@ -1,34 +1,27 @@
 from collections import namedtuple
 
-SEPARATOR_CHARACTERS = (
-    " ",
-    "\t",
-    ","
-)
+SEPARATOR_CHARACTERS = (" ", "\t", ",")
 
-SEPARATOR_TOKENS = (
-    'and',
-)
+SEPARATOR_TOKENS = ("and",)
 
 SCALE_TOKEN_ALPHA = 0
 SCALE_TOKEN_DIGIT = 1
 
 
 ScaleRepresentation = namedtuple(
-    'ScaleRepresentation',
-    ['short', 'long_singular', 'long_plural']
+    "ScaleRepresentation", ["short", "long_singular", "long_plural"]
 )
 
-SCALE_CENTURY = ScaleRepresentation('c', 'century', 'centuries')
-SCALE_DECADE = ScaleRepresentation('D', 'decade', 'decades')
-SCALE_YEAR = ScaleRepresentation('y', 'year', 'years')
-SCALE_MONTH = ScaleRepresentation('mo', 'month', 'months')
-SCALE_WEEK = ScaleRepresentation('w', 'week', 'weeks')
-SCALE_DAY = ScaleRepresentation('d', 'day', 'days')
-SCALE_HOUR = ScaleRepresentation('h', 'hour', 'hours')
-SCALE_MINUTE = ScaleRepresentation('m', 'minute', 'minutes')
-SCALE_SECOND = ScaleRepresentation('s', 'second', 'seconds')
-SCALE_MILLISECOND = ScaleRepresentation('ms', 'millisecond', 'milliseconds')
+SCALE_CENTURY = ScaleRepresentation("c", "century", "centuries")
+SCALE_DECADE = ScaleRepresentation("D", "decade", "decades")
+SCALE_YEAR = ScaleRepresentation("y", "year", "years")
+SCALE_MONTH = ScaleRepresentation("mo", "month", "months")
+SCALE_WEEK = ScaleRepresentation("w", "week", "weeks")
+SCALE_DAY = ScaleRepresentation("d", "day", "days")
+SCALE_HOUR = ScaleRepresentation("h", "hour", "hours")
+SCALE_MINUTE = ScaleRepresentation("m", "minute", "minutes")
+SCALE_SECOND = ScaleRepresentation("s", "second", "seconds")
+SCALE_MILLISECOND = ScaleRepresentation("ms", "millisecond", "milliseconds")
 
 SCALE_SECOND_CONVERSION_UNIT = 1
 SCALE_MILLISECOND_CONVERSION_UNIT = 0.001 * SCALE_SECOND_CONVERSION_UNIT
