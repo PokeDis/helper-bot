@@ -6,8 +6,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from ..database import RepDB, TagDB, WarnDB
-from ..database.db import RepCooldownDB
+from ..database import RepDB, TagDB, WarnDB, RepCooldownDB
 
 load_dotenv()
 
