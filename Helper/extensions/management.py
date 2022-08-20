@@ -1,5 +1,7 @@
 from typing import Literal, Optional
 
+import io
+import chat_exporter
 import discord
 from discord.ext import commands
 
@@ -51,6 +53,17 @@ class Management(commands.Cog, description="Tag related commands."):
                 ret += 1
 
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
+
+    @commands.command()
+    async def archive(self, ctx: commands.Context, channel: discord.TextChannel, archive_channel: discord.TextChannel) -> None:
+        if channel and archive_channel:
+            transcript = await chat_exporter.export(channel, tz_info='UTC')
+            transcript_file = discord.File(io.BytesIO(transcript.encode()),
+                                        filename=f"{channel.name}.html")
+
+            await archive_channel.send(file=transcript_file)
+            await channel.delete()
 
 
 async def setup(bot: HelperBot) -> None:

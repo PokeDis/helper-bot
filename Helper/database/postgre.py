@@ -46,13 +46,15 @@ class DatabaseModel:  # model commands class for database
         )
         return result
 
-    async def exec_fetchall(self, query: str) -> list[asyncpg.Record]:
+    async def exec_fetchall(self, query: str, data: typing.Optional[tuple[typing.Any, ...]] = None) -> list[asyncpg.Record]:
         """
         Execute a fetchall query.
         :param query:
         :type query: str
+        :type data: typing.Optional[tuple]
         :return:
         :rtype: list[asyncpg.Record]
         """
-        results: list[asyncpg.Record] = await self.database_pool.fetch(query)
+        data = data or []
+        results: list[asyncpg.Record] = await self.database_pool.fetch(query, *data)
         return results

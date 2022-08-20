@@ -32,8 +32,9 @@ class Reputation(
         self.bot = bot
         self.clean_rep_cd.start()
 
-    @commands.hybrid_command(
-        brief="Check your/others rep", help="Check your/others rep."
+    @commands.group(
+        brief="Check your/others rep",
+        help="Check your/others rep."
     )
     @commands.guild_only()
     async def rep(
@@ -50,12 +51,13 @@ class Reputation(
         embed.add_field(name="Reputation", value=f"{rep_data[1]}")
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(
-        brief="Give +1 rep to a member", help="Give +1 rep to a member."
+    @rep.command(
+        brief="Give +1 rep to a member",
+        help="Give +1 rep to a member."
     )
     @commands.cooldown(1, 120, commands.BucketType.user)
     @commands.guild_only()
-    async def giverep(self, ctx: commands.Context, member: discord.Member) -> None:
+    async def give(self, ctx: commands.Context, member: discord.Member) -> None:
         embed = discord.Embed(
             title="<a:_:1000859478217994410>  Success",
             description=f"> Gave +1 rep to {member.mention}.",
@@ -103,31 +105,14 @@ class Reputation(
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(
-        brief="Reset a members rep to 0", help="Reset a members rep to 0."
+    @rep.command(
+        brief="Remove -1 rep from a member",
+        help="Remove -1 rep from a member."
     )
     @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
-    async def repclear(self, ctx: commands.Context, member: discord.Member) -> None:
-        embed = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"> {member.mention} rep reset to 0.",
-            colour=0x2F3136,
-        )
-        data = await self.bot.rep_db.get_rep(member.id)
-        if not data:
-            return await ctx.send(embed=embed)
-        await self.bot.rep_db.clear_rep(member.id)
-        await ctx.send(embed=embed)
-
-    @commands.hybrid_command(
-        brief="Remove -1 rep from a member", help="Remove -1 rep from a member."
-    )
-    @app_commands.default_permissions(manage_messages=True)
-    @commands.has_permissions(manage_channels=True)
-    @commands.guild_only()
-    async def takerep(self, ctx: commands.Context, member: discord.Member) -> None:
+    async def take(self, ctx: commands.Context, member: discord.Member) -> None:
         embed1 = discord.Embed(
             title="<a:_:1000859478217994410>  Success",
             description=f"> Removed -1 rep from {member.mention}.",
@@ -147,6 +132,25 @@ class Reputation(
         new_rep = s[1] - 1
         await self.bot.rep_db.update_rep(member.id, new_rep)
         await ctx.send(embed=embed1)
+
+    @rep.command(
+        brief="Reset a members rep to 0",
+        help="Reset a members rep to 0."
+    )
+    @app_commands.default_permissions(manage_messages=True)
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def clear(self, ctx: commands.Context, member: discord.Member) -> None:
+        embed = discord.Embed(
+            title="<a:_:1000859478217994410>  Success",
+            description=f"> {member.mention} rep reset to 0.",
+            colour=0x2F3136,
+        )
+        data = await self.bot.rep_db.get_rep(member.id)
+        if not data:
+            return await ctx.send(embed=embed)
+        await self.bot.rep_db.clear_rep(member.id)
+        await ctx.send(embed=embed)
 
     @tasks.loop(minutes=10)
     async def clean_rep_cd(self) -> None:
