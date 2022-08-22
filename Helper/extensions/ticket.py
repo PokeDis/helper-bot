@@ -1,3 +1,4 @@
+import re
 import io
 import chat_exporter
 import discord
@@ -16,8 +17,7 @@ class TicketCloseView(discord.ui.View):
 
     @discord.ui.button(emoji="🔓", label='Re-open', style=discord.ButtonStyle.green, custom_id='persistent_view:reopen')
     async def reopen_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.stop()
-        await interaction.response.defer()
+        await interaction.message.edit(view=None)
         for key in interaction.channel.overwrites:
             if isinstance(key, discord.Member):
                 await interaction.channel.set_permissions(key, read_messages=True, send_messages=True)
@@ -30,7 +30,8 @@ class TicketCloseView(discord.ui.View):
             """,
             color=0x2F3136
         )
-        await interaction.edit_original_message(embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=view)
+        self.stop()
 
     @discord.ui.button(emoji="📄", label='Transcript', style=discord.ButtonStyle.gray, custom_id='persistent_view:transcript')
     async def transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -58,6 +59,7 @@ class TicketCloseView(discord.ui.View):
         await interaction.response.send_message("Deleting the ticket in 5 seconds.", ephemeral=False)
         await asyncio.sleep(5)
         await interaction.channel.delete()
+        self.stop()
 
 
 class InsideTicketView(discord.ui.View):
@@ -87,6 +89,7 @@ class InsideTicketView(discord.ui.View):
             color=0x2F3136
         )
         await interaction.response.send_message(embed=embed, view=view)
+        self.stop()
 
         
 class TicketCreateView(discord.ui.View):
@@ -96,6 +99,9 @@ class TicketCreateView(discord.ui.View):
     @discord.ui.button(label='Create Ticket', style=discord.ButtonStyle.green, custom_id='persistent_view:create')
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
+        for text_channel in interaction.guild.text_channels:
+            if interaction.user.name.lower() in text_channel.name:
+                return await interaction.followup.send(f"You already have an open ticket. Please head towards {text_channel.mention}.", ephemeral=True)
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False)
         }
@@ -123,14 +129,14 @@ class TicketCreateView(discord.ui.View):
         await message.pin()
 
 
-class Ticket(commands.Cog, description="Tag related commands."):
+class Ticket(commands.Cog, description="Ticket related commands."):
     def __init__(self, bot) -> None:
         self.bot = bot
 
 
     @commands.command(
-        brief="Setup Ticket System",
-        help="Setup Ticket System."
+        brief="Setup ticket system",
+        help="Setup ticket system."
     )
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
@@ -148,10 +154,74 @@ class Ticket(commands.Cog, description="Tag related commands."):
         )
         await ctx.send(embed=embed, view=view)
 
-    # @commands.command(
-    #     brief="Add a member to the ticket",
-    #     help="Add a member to the ticket"
-    # )
+    @commands.command(
+        brief="Add a member to the ticket",
+        help="Add a member to the ticket."
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def tadd(self, ctx: commands.Context, member: discord.Member):
+        discrim = int(re.sub(r"\D+", "", ctx.channel.name) or 0)
+        if discrim > 999:
+            await ctx.channel.set_permissions(member, read_messages=True, send_messages=True)
+            await ctx.send(f"Added {member.mention} to {ctx.channel.mention}")
+            return
+        embed = discord.Embed(
+            title="<a:_:1000851617182142535>  Nu Uh!",
+            description=f"> This channel is not a ticket.",
+            colour=0x2F3136,
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        brief="Remove a member from the ticket",
+        help="Remove a member from the ticket."
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def tremove(self, ctx: commands.Context, member: discord.Member):
+        discrim = int(re.sub(r"\D+", "", ctx.channel.name) or 0)
+        if discrim > 999:
+            await ctx.channel.set_permissions(member, overwrite=None)
+            await ctx.send(f"Removed {member.mention} from {ctx.channel.mention}")
+            return
+        embed = discord.Embed(
+            title="<a:_:1000851617182142535>  Nu Uh!",
+            description=f"> This channel is not a ticket.",
+            colour=0x2F3136,
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        brief="Generate transcript of the ticket",
+        help="Generate transcript of the ticket."
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def transcript(self, ctx: commands.Context):
+        discrim = int(re.sub(r"\D+", "", ctx.channel.name) or 0)
+        if discrim > 999:
+            archive_channel = discord.utils.get(ctx.guild.text_channels, name = "archived-tickets")
+            if archive_channel is None:
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False)
+                }
+                archive_channel = await ctx.guild.create_text_channel(
+                    "archived-tickets",
+                    category=ctx.channel.category,
+                    overwrites=overwrites
+                )
+            await ctx.send(f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds")
+            transcript = await chat_exporter.export(ctx.channel, tz_info='UTC')
+            transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"{ctx.channel.name}.html")
+            await archive_channel.send(file=transcript_file)
+            return
+        embed = discord.Embed(
+            title="<a:_:1000851617182142535>  Nu Uh!",
+            description=f"> This channel is not a ticket.",
+            colour=0x2F3136,
+        )
+        await ctx.send(embed=embed)
 
 
 async def setup(bot) -> None:
