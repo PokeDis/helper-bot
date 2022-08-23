@@ -48,10 +48,11 @@ class TicketCloseView(discord.ui.View):
                 category=interaction.channel.category,
                 overwrites=overwrites
             )
-        await interaction.followup.send(f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds", ephemeral=False)
+        web_msg = await interaction.followup.send(f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds", wait=True)
         transcript = await chat_exporter.export(interaction.channel, tz_info='UTC')
         transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"{interaction.channel.name}.html")
-        await archive_channel.send(file=transcript_file)
+        await archive_channel.send(f"{interaction.channel.name}", file=transcript_file)
+        await web_msg.edit(content="Done!")
 
     @discord.ui.button(emoji="🗑️", label='Delete', style=discord.ButtonStyle.red, custom_id='persistent_view:delete')
     async def delete_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -125,7 +126,7 @@ class TicketCreateView(discord.ui.View):
         embed.add_field(name="Time Opened", value=f"{create_time}")
         embed.add_field(name="Opened For", value=str(interaction.user))
         embed.set_footer(text="Please be patient while a staff member gets to this ticket.")
-        message = await channel.send(embed=embed, view=view)
+        message = await channel.send(f"{interaction.user.mention}", embed=embed, view=view)
         await message.pin()
 
 
@@ -211,10 +212,11 @@ class Ticket(commands.Cog, description="Ticket related commands."):
                     category=ctx.channel.category,
                     overwrites=overwrites
                 )
-            await ctx.send(f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds")
+            message = await ctx.send(f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds")
             transcript = await chat_exporter.export(ctx.channel, tz_info='UTC')
             transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"{ctx.channel.name}.html")
-            await archive_channel.send(file=transcript_file)
+            await archive_channel.send(f"{ctx.channel.name}", file=transcript_file)
+            await message.edit("Done!")
             return
         embed = discord.Embed(
             title="<a:_:1000851617182142535>  Nu Uh!",
