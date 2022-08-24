@@ -6,8 +6,9 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from ..database import RepDB, TagDB, WarnDB
-from ..database.db import RepCooldownDB
+from Helper.extensions.ticket import TicketCreateView, InsideTicketView, TicketCloseView
+
+from ..database import RepDB, TagDB, WarnDB, RepCooldownDB
 
 load_dotenv()
 
@@ -34,6 +35,9 @@ class HelperBot(commands.Bot):
             ssl="require",
             loop=asyncio.get_event_loop(),
         )
+        self.add_view(TicketCreateView())
+        self.add_view(InsideTicketView())
+        self.add_view(TicketCloseView())
         self.warn_db = WarnDB()
         self.tag_db = TagDB()
         self.rep_db = RepDB()

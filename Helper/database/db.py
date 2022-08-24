@@ -11,6 +11,7 @@ __all__ = (
     "TagDB",
     "WarnDB",
     "RepDB",
+    "RepCooldownDB"
 )
 
 
@@ -46,6 +47,14 @@ class TagDB(DatabaseModel):
                 name,
             ),
         )
+
+    async def get_all(self) -> list | None:
+        data = await self.exec_fetchall("SELECT name FROM tags")
+        return [record[0] for record in data]
+
+    async def get_from_user(self, user: int) -> list | None:
+        data = await self.exec_fetchall("SELECT name FROM tags WHERE user_id = $1", (user,))
+        return [record[0] for record in data]
 
 
 class WarnDB(DatabaseModel):
