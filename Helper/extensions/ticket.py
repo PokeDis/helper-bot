@@ -1,6 +1,7 @@
 import asyncio
 import io
 import re
+import typing
 
 import chat_exporter
 import discord
@@ -12,12 +13,9 @@ class TicketCloseView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def interaction_check(self, interaction: discord.Interaction):
-        if "manage_guild" in [
-            key
-            for key, value in (dict(interaction.user.guild_permissions)).items()
-            if value
-        ]:
-            return interaction.user
+        if isinstance(interaction.user, discord.Member):
+            if interaction.user.guild_permissions.manage_guild:
+                return interaction.user
 
     @discord.ui.button(
         emoji="🔓",
@@ -26,7 +24,7 @@ class TicketCloseView(discord.ui.View):
         custom_id="persistent_view:reopen",
     )
     async def reopen_ticket(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ):
         await interaction.message.edit(view=None)
         for key in interaction.channel.overwrites:
@@ -58,30 +56,12 @@ class TicketCloseView(discord.ui.View):
         button.disabled = True
         await interaction.message.edit(view=self)
         await interaction.response.defer()
-        archive_channel = discord.utils.get(
-            interaction.guild.text_channels, name="archived-tickets"
-        )
-        if archive_channel is None:
-            overwrites = {
-                interaction.guild.default_role: discord.PermissionOverwrite(
-                    read_messages=False
-                )
-            }
-            archive_channel = await interaction.guild.create_text_channel(
-                "archived-tickets",
-                category=interaction.channel.category,
-                overwrites=overwrites,
-            )
+        archive_channel = await Ticket.get_channel(interaction)
         web_msg = await interaction.followup.send(
             f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds",
             wait=True,
         )
-        transcript = await chat_exporter.export(interaction.channel, tz_info="UTC")
-        transcript_file = discord.File(
-            io.BytesIO(transcript.encode()), filename=f"{interaction.channel.name}.html"
-        )
-        await archive_channel.send(f"{interaction.channel.name}", file=transcript_file)
-        await web_msg.edit(content="Done!")
+        await Ticket.export(interaction, web_msg, archive_channel)
 
     @discord.ui.button(
         emoji="🗑️",
@@ -90,7 +70,7 @@ class TicketCloseView(discord.ui.View):
         custom_id="persistent_view:delete",
     )
     async def delete_ticket(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ):
         await interaction.message.edit(view=None)
         await interaction.response.send_message(
@@ -106,12 +86,9 @@ class InsideTicketView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def interaction_check(self, interaction: discord.Interaction):
-        if "manage_guild" in [
-            key
-            for key, value in (dict(interaction.user.guild_permissions)).items()
-            if value
-        ]:
-            return interaction.user
+        if isinstance(interaction.user, discord.Member):
+            if interaction.user.guild_permissions.manage_guild:
+                return interaction.user
 
     @discord.ui.button(
         emoji="🔒",
@@ -154,7 +131,7 @@ class TicketCreateView(discord.ui.View):
         custom_id="persistent_view:create",
     )
     async def create_ticket(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ):
         await interaction.response.defer()
         for text_channel in interaction.guild.text_channels:
@@ -202,6 +179,37 @@ class TicketCreateView(discord.ui.View):
 class Ticket(commands.Cog, description="Ticket related commands."):
     def __init__(self, bot) -> None:
         self.bot = bot
+
+    @staticmethod
+    async def get_channel(
+        ctx: typing.Union[commands.Context, discord.Interaction]
+    ) -> discord.TextChannel:
+        archive_channel = discord.utils.get(
+            ctx.guild.text_channels, name="archived-tickets"
+        )
+        if archive_channel is None:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False)
+            }
+            archive_channel = await ctx.guild.create_text_channel(
+                "archived-tickets",
+                category=ctx.channel.category,
+                overwrites=overwrites,
+            )
+        return archive_channel
+
+    @staticmethod
+    async def export(
+        interaction: typing.Union[commands.Context, discord.Interaction],
+        message: discord.Message,
+        channel: discord.TextChannel,
+    ) -> None:
+        transcript = await chat_exporter.export(interaction.channel, tz_info="UTC")
+        transcript_file = discord.File(
+            io.BytesIO(transcript.encode()), filename=f"{interaction.channel.name}.html"
+        )
+        await channel.send(f"{interaction.channel.name}", file=transcript_file)
+        await message.edit(content="Done!")
 
     @commands.command(brief="Setup ticket system", help="Setup ticket system.")
     @commands.has_permissions(manage_guild=True)
@@ -267,29 +275,11 @@ class Ticket(commands.Cog, description="Ticket related commands."):
     async def transcript(self, ctx: commands.Context):
         discrim = int(re.sub(r"\D+", "", ctx.channel.name) or 0)
         if discrim > 999:
-            archive_channel = discord.utils.get(
-                ctx.guild.text_channels, name="archived-tickets"
-            )
-            if archive_channel is None:
-                overwrites = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(
-                        read_messages=False
-                    )
-                }
-                archive_channel = await ctx.guild.create_text_channel(
-                    "archived-tickets",
-                    category=ctx.channel.category,
-                    overwrites=overwrites,
-                )
+            archive_channel = await self.get_channel(ctx)
             message = await ctx.send(
                 f"Preparing channel transcript and sending it to {archive_channel.mention}. This may take a few seconds"
             )
-            transcript = await chat_exporter.export(ctx.channel, tz_info="UTC")
-            transcript_file = discord.File(
-                io.BytesIO(transcript.encode()), filename=f"{ctx.channel.name}.html"
-            )
-            await archive_channel.send(f"{ctx.channel.name}", file=transcript_file)
-            await message.edit(content="Done!")
+            await self.export(ctx, message, archive_channel)
             return
         embed = discord.Embed(
             title="<a:_:1000851617182142535>  Nu Uh!",
