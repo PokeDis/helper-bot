@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands, menus
 
 from ..main import HelperBot
-from ..utils.logistics import Support
+from ..utils import Support
 
 
 class HelpPageSource(menus.ListPageSource):
