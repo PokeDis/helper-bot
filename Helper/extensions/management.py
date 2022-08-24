@@ -84,12 +84,6 @@ class Management(commands.Cog, description="Management commands."):
             return await ctx.send("You need more than one option to make a poll!")
         elif len(options) > 10:
             return await ctx.send("You cannot make a poll for more than ten options!")
-        elif (
-            len(options) == 2
-            and options[0].lower() == "yes"
-            and options[1].lower() == "no"
-        ):
-            reactions = ["✅", "❌"]
         else:
             reactions = [
                 "1️⃣",
@@ -103,11 +97,9 @@ class Management(commands.Cog, description="Management commands."):
                 "9️⃣",
                 "🔟",
             ]
-            description = []
-            for x, option in enumerate(options):
-                description += "\n\n {} {}".format(reactions[x], option)
+            description = [f"{reactions[i]} {j}" for i, j in enumerate(options)]
             poll_embed = discord.Embed(
-                title=f"{question}", description="".join(description), colour=0x2F3136
+                title=f"{question}", description="\n".join(description), colour=0x2F3136
             )
             poll_embed.set_footer(text=f"Poll by {str(ctx.author)}")
             poll_embed.timestamp = discord.utils.utcnow()

@@ -47,6 +47,7 @@ class Reputation(
 
             embed.add_field(name="Reputation", value=f"{rep_data[1]}")
             return await ctx.send(embed=embed)
+        return None
 
     @rep.command(brief="Give +1 rep to a member", help="Give +1 rep to a member.")
     @commands.cooldown(1, 120, commands.BucketType.user)

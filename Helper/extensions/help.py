@@ -13,7 +13,7 @@ class HelpPageSource(menus.ListPageSource):
         self.helpcommand = helpcommand
         self.mode = mode
         self.cog_check = cog_check
-        self.holder = []
+        self.holder: list[discord.Embed] = []
 
     def format_command_help(self, no, command):
         prefix = self.helpcommand.context.prefix

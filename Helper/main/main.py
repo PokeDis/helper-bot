@@ -33,15 +33,6 @@ class HelperBot(commands.Bot):
         )
 
     async def setup_hook(self) -> None:
-        self.database_pool = await asyncpg.create_pool(
-            host=os.getenv("PGHOST"),
-            user=os.getenv("PGUSER"),
-            database=os.getenv("PGDATABASE"),
-            password=os.getenv("PGPASSWORD"),
-            port=os.getenv("PGPORT"),
-            ssl="require",
-            loop=asyncio.get_event_loop(),
-        )
         self.add_view(TicketCreateView())
         self.add_view(InsideTicketView())
         self.add_view(TicketCloseView())
