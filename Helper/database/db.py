@@ -211,7 +211,7 @@ class RepCooldownDB(DatabaseModel):
 
     async def update_cd(self, member_b_id: int, time: float, member_a_id: int) -> None:
         await self.exec_write_query(
-            "UPDATE repcooldown SET member_b_ids = $1, times = $2 WHERE member_a_id = $3",
+            "UPDATE repcooldown SET member_b_ids = $2, times = $3 WHERE member_a_id = $1",
             (
                 member_b_id,
                 time,
