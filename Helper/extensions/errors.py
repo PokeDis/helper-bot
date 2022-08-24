@@ -3,6 +3,7 @@ import traceback
 from io import BytesIO
 
 import discord
+import humanfriendly
 from discord.ext import commands
 
 
@@ -65,6 +66,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             )
 
         elif isinstance(error, commands.CommandOnCooldown):
+            msg = f"This command is on a cooldown! try again in {humanfriendly.format_timespan(error.retry_after)}."
             cooldown_embed = discord.Embed(
                 title=random.choice(
                     [
@@ -76,7 +78,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                         "<a:_:1000851617182142535>  NEGATORY.",
                     ]
                 ),
-                description=f"This command is on a cooldown! try again in `{round(error.retry_after, 2)}` seconds.",
+                description=error.reason if hasattr(error, "reason") else msg,
                 color=0x2F3136,
             )
             await ctx.send(embed=cooldown_embed)

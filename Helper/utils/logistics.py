@@ -10,6 +10,9 @@ from custom_durations import Duration
 class Support:
     @staticmethod
     async def paginate(pages: list, context: commands.Context):
+        if len(pages) == 1:
+            await context.send(embed=pages[0])
+            return
         menu = ViewMenu(context, menu_type=ViewMenu.TypeEmbed)
         menu.add_pages(pages)
         back = ViewButton(
@@ -17,7 +20,7 @@ class Support:
             emoji="<:_:998564013212434462>",
             custom_id=ViewButton.ID_PREVIOUS_PAGE,
         )
-        next = ViewButton(
+        turn = ViewButton(
             style=discord.ButtonStyle.gray,
             emoji="<:_:998563574689583144>",
             custom_id=ViewButton.ID_NEXT_PAGE,
@@ -40,7 +43,7 @@ class Support:
         menu.add_button(fb)
         menu.add_button(back)
         menu.add_button(stop)
-        menu.add_button(next)
+        menu.add_button(turn)
         menu.add_button(ff)
         menu.show_page_director = False
         return await menu.start()

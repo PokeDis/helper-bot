@@ -42,6 +42,7 @@ class Moderation(
         *,
         reason: Optional[str] = None,
     ) -> None:
+        time: Union[timedelta, None] = time
         if (ctx.author.top_role > member.top_role) or (member != ctx.guild.owner):
             if time:
                 if time.total_seconds() <= 2160000:
@@ -58,7 +59,7 @@ class Moderation(
                 else:
                     embed2 = discord.Embed(
                         title="<a:_:1000851617182142535>  Nah Buddy...",
-                        description="> Maximum mute duration is `25 days`.\n> If you want to get rid of them so bad, try using the ban command ¯\_(ツ)_/¯",
+                        description="> Maximum mute duration is `25 days`.\n> If you want to get rid of them so bad, try using the ban command ¯\\_(ツ)_/¯",
                         color=0x2F3136,
                     )
                     await ctx.send(embed=embed2)
@@ -177,6 +178,7 @@ class Moderation(
         *,
         reason: Optional[str] = None,
     ) -> None:
+        time: timedelta = time  # type: ignore
         if time:
             if time.total_seconds() <= 21600:
                 embed1 = discord.Embed(
@@ -186,14 +188,14 @@ class Moderation(
                 )
                 embed1.timestamp = discord.utils.utcnow()
                 await ctx.channel.edit(
-                    slowmode_delay=time.total_seconds(),
+                    slowmode_delay=int(time.total_seconds()),
                     reason=f"{reason if reason else ctx.author.id}",
                 )
                 await ctx.send(embed=embed1)
             else:
                 embed2 = discord.Embed(
                     title="<a:_:1000851617182142535>  Nah Buddy...",
-                    description="> Maximum slowmode duration is `6 hours`.\n> If you want people rattling on, try using the mute command ¯\_(ツ)_/¯",
+                    description="> Maximum slowmode duration is `6 hours`.\n> If you want people rattling on, try using the mute command ¯\\_(ツ)_/¯",
                     color=0x2F3136,
                 )
                 await ctx.send(embed=embed2)
@@ -226,7 +228,7 @@ class Moderation(
         ) or (ctx.author.top_role < member.top_role):
             raise Moderation.HierarchyIssues("egg")
         else:
-            await self.bot.warn_db.warn_entry(
+            await self.bot.db.warn_db.warn_entry(
                 ctx.guild.id, member.id, reason, ctx.message.created_at.timestamp()
             )
             embed1 = discord.Embed(
@@ -236,7 +238,7 @@ class Moderation(
             )
             embed1.timestamp = discord.utils.utcnow()
             await ctx.send(embed=embed1)
-            data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
+            data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
             count = len(data[3])
             embed2 = discord.Embed(
                 title=f"Warned by {ctx.author.name} in {ctx.guild.name}",
@@ -261,8 +263,10 @@ class Moderation(
     @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
-        data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
+    async def warns(
+        self, ctx: commands.Context, member: discord.Member
+    ) -> Optional[discord.Message]:
+        data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
         if not data or not data[3]:
             embed3 = discord.Embed(
                 title=":mag:  Hmm...",
@@ -277,7 +281,7 @@ class Moderation(
         )
         embed.set_thumbnail(url=member.display_avatar)
         for i in range(len(data[2])):
-            timestamp = datetime.fromtimestamp(data[3][i])
+            timestamp = datetime.fromtimestamp(float(data[3][i]))
             reason = data[2][i]
             embed.add_field(
                 name=f"On {discord.utils.format_dt(timestamp, style='D')}",
@@ -296,8 +300,8 @@ class Moderation(
     @commands.guild_only()
     async def deletewarn(
         self, ctx: commands.Context, member: discord.Member, warn_id: float
-    ) -> None:
-        data = await self.bot.warn_db.warn_log(ctx.guild.id, member.id)
+    ) -> Optional[discord.Message]:
+        data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
         if not data:
             embed3 = discord.Embed(
                 title=":mag:  Hmm...",
@@ -313,7 +317,7 @@ class Moderation(
                 color=0x2F3136,
             )
             embed1.timestamp = discord.utils.utcnow()
-            await self.bot.warn_db.remove_warn(ctx.guild.id, member.id, index)
+            await self.bot.db.warn_db.remove_warn(ctx.guild.id, member.id, index)
             return await ctx.send(embed=embed1)
         else:
             embed2 = discord.Embed(
@@ -325,43 +329,23 @@ class Moderation(
 
     @tasks.loop(hours=24)
     async def clean_warns(self) -> None:
-        data = await self.bot.warn_db.exec_fetchall("SELECT * FROM warnlogs")
+        data = await self.bot.db.warn_db.get_all()
         for raw in data:
             if not raw[3]:
-                await self.bot.warn_db.exec_write_query(
-                    "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
-                    (
-                        raw[0],
-                        raw[1],
-                    ),
-                )
+                await self.bot.db.warn_db.remove_record(raw[0], raw[1])
                 continue
             for time in raw[3]:
-                diff = datetime.now() - datetime.fromtimestamp(time)
+                diff = datetime.now() - datetime.fromtimestamp(float(time))
                 clear_after = 5260000 - round(diff.total_seconds())
                 clear_at = datetime.now() + timedelta(seconds=clear_after)
                 if datetime.now() >= clear_at:
                     index = raw[3].index(time)
                     if len(raw[3]) > 1:
-                        await self.bot.warn_db.exec_write_query(
-                            "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
-                            (
-                                raw[0],
-                                raw[1],
-                            ),
-                        )
+                        await self.bot.db.warn_db.remove_warn(raw[0], raw[1])
                     else:
                         raw[2].remove(raw[2][index])
                         raw[3].remove(raw[3][index])
-                        await self.bot.warn_db.exec_write_query(
-                            "UPDATE warnlogs SET warns = $1, times = $2 WHERE member_id = $3 AND guild_id = $4",
-                            (
-                                raw[2],
-                                raw[3],
-                                raw[1],
-                                raw[0],
-                            ),
-                        )
+                        await self.bot.db.warn_db.update_warn(raw)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BETA TEST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

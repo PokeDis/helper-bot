@@ -46,7 +46,9 @@ class DatabaseModel:  # model commands class for database
         )
         return result
 
-    async def exec_fetchall(self, query: str, data: typing.Optional[tuple[typing.Any, ...]] = None) -> list[asyncpg.Record]:
+    async def exec_fetchall(
+        self, query: str, data: typing.Optional[tuple[typing.Any, ...]] = None
+    ) -> list[asyncpg.Record]:
         """
         Execute a fetchall query.
         :param query:

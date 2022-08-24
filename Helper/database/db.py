@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from discord.ext import commands
+import asyncpg
 
 from .postgre import DatabaseModel
-from ..main.main import HelperBot
 
-__all__ = (
-    "TagDB",
-    "WarnDB",
-    "RepDB",
-    "RepCooldownDB"
-)
+if TYPE_CHECKING:
+    from .connect import Database
+
+__all__: tuple[str, ...] = ("TagDB", "WarnDB", "RepDB", "RepCooldownDB")
 
 
 class TagDB(DatabaseModel):
-    async def setup(self, bot: HelperBot) -> None:
-        self.database_pool = bot.database_pool
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
         await self.exec_write_query(
             "CREATE TABLE IF NOT EXISTS tags(user_id BIGINT, name VARCHAR(50), content VARCHAR(4000))"
         )
@@ -35,9 +33,9 @@ class TagDB(DatabaseModel):
     async def delete_tag(self, name: str) -> None:
         await self.exec_write_query("DELETE FROM tags WHERE name = $1", (name,))
 
-    async def get_tag(self, tag: str) -> tuple:
+    async def get_tag(self, tag: str) -> asyncpg.Record | None:
         data = await self.exec_fetchone("SELECT * FROM tags WHERE name = $1", (tag,))
-        return data
+        return data or []
 
     async def update_tag(self, name: str, new: str) -> None:
         await self.exec_write_query(
@@ -48,23 +46,25 @@ class TagDB(DatabaseModel):
             ),
         )
 
-    async def get_all(self) -> list | None:
+    async def get_all(self) -> list[asyncpg.Record]:
         data = await self.exec_fetchall("SELECT name FROM tags")
         return [record[0] for record in data]
 
-    async def get_from_user(self, user: int) -> list | None:
-        data = await self.exec_fetchall("SELECT name FROM tags WHERE user_id = $1", (user,))
+    async def get_from_user(self, user: int) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall(
+            "SELECT name FROM tags WHERE user_id = $1", (user,)
+        )
         return [record[0] for record in data]
 
 
 class WarnDB(DatabaseModel):
-    async def setup(self, bot: commands.Bot) -> None:
-        self.database_pool = bot.database_pool
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
         await self.exec_write_query(
             "CREATE TABLE IF NOT EXISTS warnlogs (guild_id BIGINT, member_id BIGINT, warns TEXT[], times DECIMAL[])"
         )
 
-    async def warn_log(self, guild_id: int, member_id: int) -> list:
+    async def warn_log(self, guild_id: int, member_id: int) -> asyncpg.Record | None:
         data = await self.exec_fetchone(
             "SELECT * FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
             (
@@ -130,10 +130,30 @@ class WarnDB(DatabaseModel):
             ),
         )
 
+    async def get_all(self) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall("SELECT * FROM warnlogs")
+        return data
+
+    async def remove_record(self, guild_id: int, member_id: int) -> None:
+        await self.exec_write_query(
+            "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
+            (
+                guild_id,
+                member_id,
+            ),
+        )
+
+    async def update_warn(self, data: list) -> None:
+        args = (*data,)
+        await self.exec_write_query(
+            "UPDATE warnlogs SET warns = $3, times = $4 WHERE member_id = $2 AND guild_id = $1",
+            args,
+        )
+
 
 class RepDB(DatabaseModel):
-    async def setup(self, bot: commands.Bot) -> None:
-        self.database_pool = bot.database_pool
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
         await self.exec_write_query(
             "CREATE TABLE IF NOT EXISTS reputation(user_id BIGINT PRIMARY KEY, rep INT)"
         )
@@ -152,7 +172,7 @@ class RepDB(DatabaseModel):
             "DELETE FROM reputation WHERE user_id = $1", (user_id,)
         )
 
-    async def get_rep(self, user_id: int) -> tuple:
+    async def get_rep(self, user_id: int) -> asyncpg.Record | None:
         data = await self.exec_fetchone(
             "SELECT * FROM reputation WHERE user_id = $1", (user_id,)
         )
@@ -169,16 +189,37 @@ class RepDB(DatabaseModel):
 
 
 class RepCooldownDB(DatabaseModel):
-    async def setup(self, bot: commands.Bot) -> None:
-        self.database_pool = bot.database_pool
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
         await self.exec_write_query(
             "CREATE TABLE IF NOT EXISTS repcooldown (member_a_id BIGINT, member_b_ids BIGINT[], times DECIMAL[])"
         )
 
-    async def cd_log(self, member_id: int) -> list:
+    async def cd_log(self, member_id: int) -> asyncpg.Record | None:
         data = await self.exec_fetchone(
             "SELECT * FROM repcooldown WHERE member_a_id = $1", (member_id,)
         )
+        return data or []
+
+    async def remove_cd(self, member_id: int) -> None:
+        await self.exec_write_query(
+            "DELETE FROM repcooldown WHERE member_a_id = $1", (member_id,)
+        )
+
+    async def update_cd(
+        self, member_b_id: int, time: datetime.timestamp, member_a_id: int
+    ) -> None:
+        await self.exec_write_query(
+            "UPDATE repcooldown SET member_b_ids = $1, times = $2 WHERE member_a_id = $3",
+            (
+                member_b_id,
+                time,
+                member_a_id,
+            ),
+        )
+
+    async def get_all(self) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall("SELECT * FROM repcooldown")
         return data or []
 
     async def cd_entry(
