@@ -5,6 +5,7 @@ from datetime import datetime
 from discord.ext import commands
 
 from .postgre import DatabaseModel
+from ..main.main import HelperBot
 
 __all__ = (
     "TagDB",
@@ -14,7 +15,7 @@ __all__ = (
 
 
 class TagDB(DatabaseModel):
-    async def setup(self, bot: commands.Bot) -> None:
+    async def setup(self, bot: HelperBot) -> None:
         self.database_pool = bot.database_pool
         await self.exec_write_query(
             "CREATE TABLE IF NOT EXISTS tags(user_id BIGINT, name VARCHAR(50), content VARCHAR(4000))"
