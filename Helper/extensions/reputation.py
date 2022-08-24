@@ -46,7 +46,8 @@ class Reputation(
                 return await ctx.send(embed=embed)
 
             embed.add_field(name="Reputation", value=f"{rep_data[1]}")
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
+        return None
 
     @rep.command(brief="Give +1 rep to a member", help="Give +1 rep to a member.")
     @commands.cooldown(1, 120, commands.BucketType.user)
@@ -75,7 +76,7 @@ class Reputation(
             raise error
 
         if not await self.can_manage_rep(ctx, member.id):
-            return
+            return None
 
         data = await self.bot.db.rep_db.get_rep(member.id)
         if not data:
@@ -91,7 +92,7 @@ class Reputation(
         await self.bot.db.rep_cd_db.cd_entry(
             ctx.author.id, member.id, ctx.message.created_at.timestamp()
         )
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @rep.command(
         brief="Remove -1 rep from a member", help="Remove -1 rep from a member."
@@ -120,7 +121,7 @@ class Reputation(
             return await ctx.send(embed=embed2)
         new_rep = s[1] - 1
         await self.bot.db.rep_db.update_rep(member.id, new_rep)
-        await ctx.send(embed=embed1)
+        return await ctx.send(embed=embed1)
 
     @rep.command(brief="Reset a members rep to 0", help="Reset a members rep to 0.")
     @app_commands.default_permissions(manage_messages=True)
@@ -138,7 +139,7 @@ class Reputation(
         if not data:
             return await ctx.send(embed=embed)
         await self.bot.db.rep_db.clear_rep(member.id)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @tasks.loop(minutes=10)
     async def clean_rep_cd(self) -> None:

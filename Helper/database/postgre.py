@@ -57,6 +57,6 @@ class DatabaseModel:  # model commands class for database
         :return:
         :rtype: list[asyncpg.Record]
         """
-        data = data or []
-        results: list[asyncpg.Record] = await self.database_pool.fetch(query, *data)
+        args: typing.Union[tuple, list] = data or []
+        results: list[asyncpg.Record] = await self.database_pool.fetch(query, *args)
         return results

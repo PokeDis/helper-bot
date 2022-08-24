@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -64,7 +65,9 @@ class WarnDB(DatabaseModel):
             "CREATE TABLE IF NOT EXISTS warnlogs (guild_id BIGINT, member_id BIGINT, warns TEXT[], times DECIMAL[])"
         )
 
-    async def warn_log(self, guild_id: int, member_id: int) -> asyncpg.Record | None:
+    async def warn_log(
+        self, guild_id: int, member_id: int
+    ) -> typing.Optional[asyncpg.Record]:
         data = await self.exec_fetchone(
             "SELECT * FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
             (
@@ -98,7 +101,7 @@ class WarnDB(DatabaseModel):
             )
 
     async def warn_entry(
-        self, guild_id: int, member_id: int, reason: str, time: datetime.timestamp
+        self, guild_id: int, member_id: int, reason: str, time: float
     ) -> None:
         data = await self.warn_log(guild_id, member_id)
         if not data:
@@ -206,9 +209,7 @@ class RepCooldownDB(DatabaseModel):
             "DELETE FROM repcooldown WHERE member_a_id = $1", (member_id,)
         )
 
-    async def update_cd(
-        self, member_b_id: int, time: datetime.timestamp, member_a_id: int
-    ) -> None:
+    async def update_cd(self, member_b_id: int, time: float, member_a_id: int) -> None:
         await self.exec_write_query(
             "UPDATE repcooldown SET member_b_ids = $1, times = $2 WHERE member_a_id = $3",
             (
@@ -222,9 +223,7 @@ class RepCooldownDB(DatabaseModel):
         data = await self.exec_fetchall("SELECT * FROM repcooldown")
         return data or []
 
-    async def cd_entry(
-        self, member_id: int, member_b_id: int, time: datetime.timestamp
-    ) -> None:
+    async def cd_entry(self, member_id: int, member_b_id: int, time: float) -> None:
         data = await self.cd_log(member_id)
         if not data:
             await self.exec_write_query(

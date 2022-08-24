@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from ..main import HelperBot
-from ..utils.logistics import DurationCoverter
+from ..utils import DurationCoverter
 
 
 class Moderation(
@@ -288,7 +288,7 @@ class Moderation(
                 value=f"Reason: {reason}\nWarn ID: `{data[3][i]}`",
                 inline=False,
             )
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.hybrid_command(
         brief="Clear a single warning from a member",

@@ -92,6 +92,15 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                 ),
             )
 
+        elif isinstance(error, commands.CommandError):
+            await ctx.send(
+                embed=discord.Embed(
+                    title="<a:_:1000851617182142535>  Error!",
+                    description=error.args[0],
+                    color=0x2F3136,
+                )
+            )
+
         elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send(
                 embed=discord.Embed(

@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import os
 
 import asyncpg
@@ -17,7 +18,7 @@ load_dotenv()
 class HelperBot(commands.Bot):
 
     database_pool: asyncpg.pool.Pool
-    launch_time: discord.utils.utcnow
+    launch_time: datetime.datetime
     db: Database
 
     def __init__(self) -> None:
@@ -32,15 +33,6 @@ class HelperBot(commands.Bot):
         )
 
     async def setup_hook(self) -> None:
-        self.database_pool = await asyncpg.create_pool(
-            host=os.getenv("PGHOST"),
-            user=os.getenv("PGUSER"),
-            database=os.getenv("PGDATABASE"),
-            password=os.getenv("PGPASSWORD"),
-            port=int(os.getenv("PGPORT")),
-            ssl="require",
-            loop=asyncio.get_event_loop(),
-        )
         self.add_view(TicketCreateView())
         self.add_view(InsideTicketView())
         self.add_view(TicketCloseView())

@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from ..main import HelperBot
-from ..utils.logistics import Support
+from ..utils import Support
 
 
 class Tag(
@@ -141,7 +141,7 @@ class Tag(
             color=0x2F3136,
         )
         embed2.timestamp = discord.utils.utcnow()
-        await ctx.send(embed=embed2)
+        return await ctx.send(embed=embed2)
 
     @tag.command(brief="Delete an existing tag", help="Delete an existing tag.")
     @commands.guild_only()
@@ -152,7 +152,7 @@ class Tag(
             return await ctx.send(embed=self.INVALIDTAG)
 
         if not await self.can_edit_tag(ctx, tag_data[0]):
-            return
+            return None
 
         await self.bot.db.tag_db.delete_tag(tag)
         embed2 = discord.Embed(
@@ -161,7 +161,7 @@ class Tag(
             color=0x2F3136,
         )
         embed2.timestamp = discord.utils.utcnow()
-        await ctx.send(embed=embed2)
+        return await ctx.send(embed=embed2)
 
     @tag.command(brief="Edit an existing tag", help="Edit an existing tag.")
     @commands.guild_only()
@@ -172,7 +172,7 @@ class Tag(
             return await ctx.send(embed=self.INVALIDTAG)
 
         if not await self.can_edit_tag(ctx, tag_data[0]):
-            return
+            return None
 
         await self.bot.db.tag_db.update_tag(name, content)
         embed2 = discord.Embed(
@@ -181,7 +181,7 @@ class Tag(
             color=0x2F3136,
         )
         embed2.timestamp = discord.utils.utcnow()
-        await ctx.send(embed=embed2)
+        return await ctx.send(embed=embed2)
 
 
 async def setup(bot: HelperBot) -> None:
