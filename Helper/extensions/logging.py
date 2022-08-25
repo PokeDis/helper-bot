@@ -164,12 +164,12 @@ class Logger(commands.Cog):
             embed.description = f"{after.mention} has updated their name."
             embed.add_field(name="Before", value=before.display_name)
             embed.add_field(name="After", value=after.display_name)
-            embed.set_image(url=after.display_avatar)
             await self.bot.logs.send(embed=embed)
         elif before.avatar != after.avatar:
             embed.description = f"{after.mention} has updated their avatar."
             embed.add_field(name="Before", value=before.avatar.url)
             embed.add_field(name="After", value=after.avatar.url)
+            embed.set_image(url=after.display_avatar)
             embed2 = embed.copy()
             embed2.set_image(url=before.display_avatar)
             await self.bot.logs.send(embeds=[embed, embed2])

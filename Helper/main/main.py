@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import os
 
@@ -12,6 +11,7 @@ from Helper.extensions.ticket import (InsideTicketView, TicketCloseView,
 
 from ..database import Database
 
+
 load_dotenv()
 
 
@@ -22,6 +22,7 @@ class HelperBot(commands.Bot):
     db: Database
     logs: discord.TextChannel
     LOGCHANNEL: int = 998285318987989063
+    TOKEN: str = os.getenv("TOKEN")
 
     def __init__(self) -> None:
         super().__init__(
@@ -49,5 +50,5 @@ class HelperBot(commands.Bot):
     async def on_ready(self) -> None:
         print(f"{self.user} is ready!")
 
-    async def start(self, token: str = os.getenv("TOKEN"), *, reconnect: bool = True) -> None:
+    async def start(self, token: str = TOKEN, *, reconnect: bool = True) -> None:
         await super().start(token, reconnect=reconnect)
