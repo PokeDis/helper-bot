@@ -49,5 +49,5 @@ class HelperBot(commands.Bot):
     async def on_ready(self) -> None:
         print(f"{self.user} is ready!")
 
-    def run(self) -> None:
-        super().run(os.getenv("TOKEN"))
+    async def start(self, token: str = os.getenv("TOKEN"), *, reconnect: bool = True) -> None:
+        await super().start(token, reconnect=reconnect)
