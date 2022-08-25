@@ -99,7 +99,11 @@ class MyHelp(commands.MinimalHelpCommand):
         category = {}
         for k, v in self.context.bot.cogs.items():
             if len((x := v.get_commands())) > 0:
-                category[k] = x
+                if len(x) == 1:
+                    if isinstance(x[0], commands.Group):
+                        category[k] = [x[0]] + list(x[0].commands)
+                else:
+                    category[k] = x
         categorydesc = [
             x if (x := i.description) else "No description provided."
             for i in self.context.bot.cogs.values()
@@ -110,7 +114,7 @@ class MyHelp(commands.MinimalHelpCommand):
             formatter.format_pages(category, categorydesc), self.context
         )
 
-    async def send_cog_help(self, cog):
+    async def send_cog_help(self, cog: commands.Cog):
         if len(subcommands := cog.get_commands()) == 0:
             return await self.send_empty_cog_help(cog)
         category = {cog.qualified_name: subcommands}

@@ -1,3 +1,5 @@
+import io
+
 import discord
 from discord.ext import commands
 from ..main import HelperBot
@@ -10,44 +12,55 @@ class Logger(commands.Cog):
         
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:
-        await self.bot.logs.send(f"{member.mention} joined the server.")
-        
+        embed = discord.Embed(title="Join", description=f"{member} has joined the server", colour=discord.Colour.green())
+        embed.add_field(name="Name", value=f"{member} [{member.id}]\n{member.mention}", inline=True)
+        embed.add_field(name="Joined", value=member.joined_at, inline=True)
+        embed.add_field(name="Account Age", value=member.created_at, inline=True)
+        embed.add_field(name="Member Count", value=len(member.guild.members), inline=True)
+        embed.set_thumbnail(url=member.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
+        await self.bot.logs.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member) -> None:
-        await self.bot.logs.send(f"{member.mention} left the server.")
-        
+        embed = discord.Embed(title="Leave", description=f"{member} has left the server", colour=discord.Colour.red())
+        embed.set_thumbnail(url=member.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
+        await self.bot.logs.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
-        if before.content == after.content:
+        embed = discord.Embed(title="Edit Message", description=f"{after.author} edited their message in {after.channel.mention}.\n[Go to message]({after.jump_url})", colour=discord.Colour.blue())
+        embed.set_thumbnail(url=after.author.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
+        if len(after.content) > 1024 or len(before.content) > 1024:
+            buffer = io.BytesIO()
+            message = f"Before:\n {before.content}\nAfter:\n {after.content}"
+            buffer.write(bytes(message, "utf-8"))
+            buffer.seek(0)
+            file = discord.File(buffer, filename="message_edit.txt")
+            await self.bot.logs.send(embed=embed, file=file)
             return
-        await self.bot.logs.send(
-            f"{before.author.mention} edited their message in {before.channel.mention} from `{before.content}` to `{after.content}`."
-        )
+        embed.add_field(name="Before", value=before.content if before.content else "No content")
+        embed.add_field(name="After", value=after.content if after.content else "No content")
+        await self.bot.logs.send(embed=embed)
         
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message) -> None:
-        await self.bot.logs.send(
-            f"{message.author.mention} deleted their message in {message.channel.mention} from `{message.content}`."
-        )
-        
-    @commands.Cog.listener()
-    async def on_message_delete_bulk(self, messages: list[discord.Message]) -> None:
-        await self.bot.logs.send(
-            f"{len(messages)} messages were deleted in {messages[0].channel.mention}."
-        )
-        
-    @commands.Cog.listener()
-    async def on_message_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None:
-        await self.bot.logs.send(
-            f"{user.mention} added {reaction.emoji} to {reaction.message.channel.mention} in {reaction.message.author.mention}."
-        )
-        
-    @commands.Cog.listener()
-    async def on_message_reaction_remove(self, reaction: discord.Reaction, user: discord.User) -> None:
-        await self.bot.logs.send(
-            f"{user.mention} removed {reaction.emoji} from {reaction.message.channel.mention} in {reaction.message.author.mention}."
-        )
-        
+        embed = discord.Embed(title="Delete Message", description=f"{message.author} deleted their message in {message.channel.mention}", colour=discord.Colour.red())
+        embed.set_thumbnail(url=message.author.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
+        if len(message.content) > 1024:
+            buffer = io.BytesIO()
+            message = f"Message:\n{message.content}"
+            buffer.write(bytes(message, "utf-8"))
+            buffer.seek(0)
+            file = discord.File(buffer, filename="message_delete.txt")
+            await self.bot.logs.send(embed=embed, file=file)
+            return
+        embed.add_field(name="Message", value=message.content if message.content else "No content")
+        await self.bot.logs.send(embed=embed)
+
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Logger(bot))

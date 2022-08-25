@@ -149,17 +149,19 @@ class Mod(commands.Cog):
         checker = self._spam_check[guild_id]
         if not checker.is_spamming(message):
             return
-
+        embed = discord.Embed(title=f"Auto-Ban {member}", colour=discord.Colour.red())
+        embed.set_thumbnail(url=member.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
         try:
+            embed.description = f"**Automatic ban for spamming.\n[Raid Mode] Banned {member} (ID: {member.id}) from server {member.guild} via strict mode.**"
             await member.ban(reason="Auto-ban from spam (strict raid mode ban)")
         except discord.HTTPException:
+            embed.description = f"**Failed to ban {member} for spamming.**"
             raise commands.CommandError(
                 f"[Raid Mode] Failed to ban {member} (ID: {member.id}) from server {member.guild} via strict mode."
             )
         else:
-            await self.bot.logs.send(
-                f"[Raid Mode] Banned {member} (ID: {member.id}) from server {member.guild} via strict mode."
-            )
+            await self.bot.logs.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -189,17 +191,20 @@ class Mod(commands.Cog):
         mention_count = sum(not m.bot and m.id != author.id for m in message.mentions)
         if mention_count < 5:
             return
+        embed = discord.Embed(title=f"Auto-Ban {author}", colour=discord.Colour.red())
+        embed.set_thumbnail(url=author.display_avatar)
+        embed.timestamp = discord.utils.utcnow()
 
         try:
+            embed.description = f"**Automatic ban for spamming.\n[Mention Mode] Banned {author} (ID: {author.id}) from server {author.guild} via strict mode.**"
             await author.ban(reason=f"Spamming mentions ({mention_count} mentions)")
         except Exception as e:
+            embed.description = f"**Failed to ban {author} for spamming mentions.**"
             raise commands.CommandError(
                 f"Failed to autoban member {author} (ID: {author.id}) in guild ID {guild_id}"
             )
         else:
-            await self.bot.logs.send(
-                f"Member {author} (ID: {author.id}) has been autobanned from guild ID {guild_id}"
-            )
+            await self.bot.logs.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -210,7 +215,13 @@ class Mod(commands.Cog):
 
         if checker.is_fast_join(member):
             fastjoin = True
-        # TODO: savvy check fastjoin and then ban or warn do whatever u want
+
+        if fastjoin:
+            embed = discord.Embed(title=f"High-Speed Join {member}", colour=discord.Colour.red())
+            embed.set_thumbnail(url=member.display_avatar)
+            embed.timestamp = discord.utils.utcnow()
+            embed.description = f"**High-speed join from {member} (ID: {member.id}) in server {member.guild} via strict mode.**"
+            await self.bot.logs.send(embed=embed)
 
 
 async def setup(bot: HelperBot) -> None:
