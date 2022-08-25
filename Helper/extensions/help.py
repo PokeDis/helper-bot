@@ -16,7 +16,7 @@ class Formatter:
         return f"{command.qualified_name}\n ```yaml\n{params}```"
 
     def __format_param(self, param: commands.Command) -> str:
-        signature = self.helpcommand.get_command_signature(param).replace("=None", "")
+        signature = self.helpcommand.get_command_signature(param)
         return signature
 
     @staticmethod
