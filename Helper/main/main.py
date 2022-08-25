@@ -20,6 +20,8 @@ class HelperBot(commands.Bot):
     database_pool: asyncpg.pool.Pool
     launch_time: datetime.datetime
     db: Database
+    logs: discord.TextChannel
+    LOGCHANNEL: int = 998285318987989063
 
     def __init__(self) -> None:
         super().__init__(
@@ -35,6 +37,7 @@ class HelperBot(commands.Bot):
         self.db = Database()
         await self.db.setup()
         self.launch_time = discord.utils.utcnow()
+        self.logs = self.get_channel(self.LOGCHANNEL) or await self.fetch_channel(self.LOGCHANNEL)
         [
             await self.load_extension(f"Helper.extensions.{file[:-3]}")
             for file in os.listdir("Helper/extensions")

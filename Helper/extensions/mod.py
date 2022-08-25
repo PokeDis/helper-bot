@@ -139,8 +139,6 @@ class SpamCheck:
 
 class Mod(commands.Cog):
 
-    LOGCHANNEL: int = 998285318987989063
-
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
         self._spam_check: defaultdict[int, SpamCheck] = defaultdict(SpamCheck)
@@ -148,7 +146,6 @@ class Mod(commands.Cog):
     async def check_raid(
         self, guild_id: int, member: discord.Member, message: discord.Message
     ) -> None:
-        channel = self.bot.get_channel(self.LOGCHANNEL)
         checker = self._spam_check[guild_id]
         if not checker.is_spamming(message):
             return
@@ -160,7 +157,7 @@ class Mod(commands.Cog):
                 f"[Raid Mode] Failed to ban {member} (ID: {member.id}) from server {member.guild} via strict mode."
             )
         else:
-            await channel.send(
+            await self.bot.logs.send(
                 f"[Raid Mode] Banned {member} (ID: {member.id}) from server {member.guild} via strict mode."
             )
 
@@ -200,8 +197,7 @@ class Mod(commands.Cog):
                 f"Failed to autoban member {author} (ID: {author.id}) in guild ID {guild_id}"
             )
         else:
-            channel = self.bot.get_channel(self.LOGCHANNEL)
-            await channel.send(
+            await self.bot.logs.send(
                 f"Member {author} (ID: {author.id}) has been autobanned from guild ID {guild_id}"
             )
 
