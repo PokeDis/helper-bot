@@ -11,9 +11,9 @@ class Formatter:
         self.ctx = helpcommand.context
         self.helpcommand = helpcommand
 
-    def __format_command_signature(self, command: commands.Command) -> str:
+    def __format_command_signature(self, command: commands.Command) -> tuple[str, str]:
         params = self.__format_param(command)
-        return f"{command.qualified_name}\n ```yaml\n{params}```"
+        return f"{command.qualified_name}\n", f"```yaml\n{params}```"
 
     def __format_param(self, param: commands.Command) -> str:
         signature = self.helpcommand.get_command_signature(param)
@@ -50,9 +50,10 @@ class Formatter:
         return command.description or "No description provided."
 
     def format_command(self, command: commands.Command) -> discord.Embed:
+        signature = self.__format_command_signature(command)
         embed = discord.Embed(
-            title=self.__format_command_signature(command),
-            description=self.__format_command_help(command),
+            title=signature[0],
+            description=signature[1] + self.__format_command_help(command),
             color=0x2F3136,
         )
         embed.add_field(
@@ -68,6 +69,7 @@ class Formatter:
             text=f"Requested by {self.ctx.author}",
             icon_url=self.ctx.author.display_avatar,
         )
+        embed.set_thumbnail(url=self.ctx.bot.user.display_avatar)
         return embed
 
     def format_pages(
@@ -77,14 +79,17 @@ class Formatter:
         for num, (name, allcommand) in enumerate(pages.items()):
             embed = discord.Embed(title=name, description=desc[num], color=0x2F3136)
             for command in allcommand:
+                signature = self.__format_command_signature(command)
                 embed.add_field(
-                    name=self.__format_command_signature(command),
-                    value=self.__format_command_help(command),
+                    name=signature[0],
+                    value=signature[1] + self.__format_command_help(command),
+                    inline=False
                 )
             embed.set_footer(
                 text=f"Requested by {self.ctx.author} | Page {num + 1}/{len(pages)}",
                 icon_url=self.ctx.author.display_avatar,
             )
+            embed.set_thumbnail(url=self.ctx.bot.user.display_avatar)
             embeds.append(embed)
         return embeds
 

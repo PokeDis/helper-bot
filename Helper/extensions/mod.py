@@ -172,17 +172,13 @@ class Mod(commands.Cog):
 
         if message.guild is None:
             return
-
         if not isinstance(author, discord.Member):
             return
-
         if author.bot:
             return
-
         # we're going to ignore members with manage messages
         if author.guild_permissions.manage_messages:
             return
-
         guild_id = message.guild.id
 
         # check for raid mode stuff
@@ -200,7 +196,6 @@ class Mod(commands.Cog):
         try:
             await author.ban(reason=f"Spamming mentions ({mention_count} mentions)")
         except Exception as e:
-            print(e)
             raise commands.CommandError(
                 f"Failed to autoban member {author} (ID: {author.id}) in guild ID {guild_id}"
             )
