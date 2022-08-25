@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import time
 from collections import defaultdict
@@ -138,7 +140,6 @@ class SpamCheck:
 
 
 class Mod(commands.Cog):
-
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
         self._spam_check: defaultdict[int, SpamCheck] = defaultdict(SpamCheck)
@@ -199,6 +200,7 @@ class Mod(commands.Cog):
             embed.description = f"**Automatic ban for spamming.\n[Mention Mode] Banned {author} (ID: {author.id}) from server {author.guild} via strict mode.**"
             await author.ban(reason=f"Spamming mentions ({mention_count} mentions)")
         except Exception as e:
+            print(e)
             embed.description = f"**Failed to ban {author} for spamming mentions.**"
             raise commands.CommandError(
                 f"Failed to autoban member {author} (ID: {author.id}) in guild ID {guild_id}"
@@ -217,7 +219,9 @@ class Mod(commands.Cog):
             fastjoin = True
 
         if fastjoin:
-            embed = discord.Embed(title=f"High-Speed Join {member}", colour=discord.Colour.red())
+            embed = discord.Embed(
+                title=f"High-Speed Join {member}", colour=discord.Colour.red()
+            )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
             embed.description = f"**High-speed join from {member} (ID: {member.id}) in server {member.guild} via strict mode.**"

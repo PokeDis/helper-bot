@@ -216,7 +216,9 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             error_lines = traceback.format_exception(error_type, error, error_trace)
             strange_error = "".join(error_lines)
             buffer = BytesIO(strange_error.encode("utf8"))
-            channel = self.bot.get_channel(1012229238415433768) or await self.bot.fetch_channel(1012229238415433768)
+            channel = self.bot.get_channel(
+                1012229238415433768
+            ) or await self.bot.fetch_channel(1012229238415433768)
             await channel.send(file=discord.File(fp=buffer, filename="error.txt"))
             raise error
 

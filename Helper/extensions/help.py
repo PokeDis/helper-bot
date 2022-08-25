@@ -83,7 +83,7 @@ class Formatter:
                 embed.add_field(
                     name=signature[0],
                     value=signature[1] + self.__format_command_help(command),
-                    inline=False
+                    inline=False,
                 )
             embed.set_footer(
                 text=f"Requested by {self.ctx.author} | Page {num + 1}/{len(pages)}",

@@ -18,15 +18,6 @@ class Moderation(
         self.bot = bot
         self.clean_warns.start()
 
-    # - - - - - Custom Errors - - - - -
-    class HierarchyIssues(Exception):
-        pass
-
-    class PunishmentIssues(Exception):
-        pass
-
-    # - - - - - - - - - - - - - - - - -
-
     @commands.hybrid_command(
         brief="Mute a member so they cannot type",
         help="Mute a member so they cannot type.",
@@ -55,6 +46,7 @@ class Moderation(
                     await member.timeout(
                         time, reason=f"{reason if reason else ctx.author.id}"
                     )
+                    await self.bot.logs.send(embed=embed1)
                     await ctx.send(embed=embed1)
                 else:
                     embed2 = discord.Embed(
@@ -74,9 +66,15 @@ class Moderation(
                 await member.timeout(
                     unmute_time, reason=f"{reason if reason else ctx.author.id}"
                 )
+                await self.bot.logs.send(embed=embed3)
                 await ctx.send(embed=embed3)
         else:
-            raise Moderation.HierarchyIssues("egg")
+            embed4 = discord.Embed(
+                title="<a:_:1000851617182142535>  Nah Buddy...",
+                description="> You can't mute this user.\n> If you want to get rid of them so bad, try using the ban command ¯\\_(ツ)_/¯",
+                color=0x2F3136,
+            )
+            await ctx.send(embed=embed4)
 
     @commands.hybrid_command(brief="Unmute a member", help="Unmute a member.")
     @app_commands.default_permissions(manage_messages=True)
@@ -91,9 +89,16 @@ class Moderation(
             )
             embed.timestamp = discord.utils.utcnow()
             await member.timeout(None)
+            await self.bot.logs.send(embed=embed)
             await ctx.send(embed=embed)
         else:
-            raise Moderation.PunishmentIssues("egg")
+            embed = discord.Embed(
+                title="<a:_:1000859478217994410>  Success",
+                description=f"> {member} is not muted.",
+                color=0x2F3136,
+            )
+            embed.timestamp = discord.utils.utcnow()
+            await ctx.send(embed=embed)
 
     @commands.hybrid_command(brief="Kick a member", help="Kick a member.")
     @app_commands.default_permissions(kick_members=True)
@@ -116,7 +121,12 @@ class Moderation(
             await member.kick(reason=f"{reason if reason else ctx.author.id}")
             await ctx.send(embed=embed1)
         else:
-            raise Moderation.HierarchyIssues("egg")
+            embed2 = discord.Embed(
+                title="<a:_:1000851617182142535>  Nah Buddy...",
+                description="> You can't kick this user.",
+                color=0x2F3136,
+            )
+            await ctx.send(embed=embed2)
 
     @commands.hybrid_command(brief="Ban a member", help="Ban a member.")
     @app_commands.default_permissions(ban_members=True)
@@ -142,7 +152,12 @@ class Moderation(
             await ctx.guild.ban(member, reason=f"{reason if reason else ctx.author.id}")
             await ctx.send(embed=embed)
         else:
-            raise Moderation.HierarchyIssues("egg")
+            embed = discord.Embed(
+                title="<a:_:1000851617182142535>  Nah Buddy...",
+                description="> You can't ban this user.",
+                colour=0x2F3136,
+            )
+            await ctx.send(embed=embed)
 
     @commands.hybrid_command(brief="Unban a member", help="Unban a member.")
     @app_commands.default_permissions(ban_members=True)
@@ -183,7 +198,7 @@ class Moderation(
             if time.total_seconds() <= 21600:
                 embed1 = discord.Embed(
                     title="<a:_:1000859478217994410>  Success",
-                    description=f"Slowmode of `{humanfriendly.format_timespan(time.total_seconds())}` has been started in <#{ctx.channel.id}>.\n**Reason:**\n> {reason}",
+                    description=f"Slowmode of `{humanfriendly.format_timespan(time.total_seconds())}` has been started in <#{ctx.channel.mention}>.\n**Reason:**\n> {reason}",
                     color=0x2F3136,
                 )
                 embed1.timestamp = discord.utils.utcnow()
@@ -191,6 +206,7 @@ class Moderation(
                     slowmode_delay=int(time.total_seconds()),
                     reason=f"{reason if reason else ctx.author.id}",
                 )
+                await self.bot.logs.send(embed=embed1)
                 await ctx.send(embed=embed1)
             else:
                 embed2 = discord.Embed(
@@ -202,13 +218,14 @@ class Moderation(
         else:
             embed3 = discord.Embed(
                 title="<a:_:1000859478217994410>  Success",
-                description=f"Slowmode has been terminated.\n**Reason:**\n> {reason}",
+                description=f"Slowmode has been terminated in {ctx.channel.mention}.\n**Reason:**\n> {reason}",
                 color=0x2F3136,
             )
             embed3.timestamp = discord.utils.utcnow()
             await ctx.channel.edit(
                 slowmode_delay=0, reason=f"{reason if reason else ctx.author.id}"
             )
+            await self.bot.logs.send(embed=embed3)
             await ctx.send(embed=embed3)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BETA TEST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,7 +243,12 @@ class Moderation(
         if (
             member == ctx.author or member == ctx.guild.owner or member == self.bot.user
         ) or (ctx.author.top_role < member.top_role):
-            raise Moderation.HierarchyIssues("egg")
+            embed = discord.Embed(
+                title="<a:_:1000851617182142535>  Nah Buddy...",
+                description="> You can't warn this user.",
+                color=0x2F3136,
+            )
+            await ctx.send(embed=embed)
         else:
             await self.bot.db.warn_db.warn_entry(
                 ctx.guild.id, member.id, reason, ctx.message.created_at.timestamp()
@@ -238,6 +260,7 @@ class Moderation(
             )
             embed1.timestamp = discord.utils.utcnow()
             await ctx.send(embed=embed1)
+            await self.bot.logs.send(embed=embed1)
             data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
             count = len(data[3])
             embed2 = discord.Embed(
@@ -253,6 +276,7 @@ class Moderation(
             )
             embed2.set_thumbnail(url=ctx.author.display_avatar)
             try:
+                await self.bot.logs.send(embed=embed2)
                 await member.send(embed=embed2)
             except discord.HTTPException:
                 pass
@@ -318,6 +342,7 @@ class Moderation(
             )
             embed1.timestamp = discord.utils.utcnow()
             await self.bot.db.warn_db.remove_warn(ctx.guild.id, member.id, index)
+            await self.bot.logs.send(embed=embed1)
             return await ctx.send(embed=embed1)
         else:
             embed2 = discord.Embed(
@@ -346,41 +371,6 @@ class Moderation(
                         raw[2].remove(raw[2][index])
                         raw[3].remove(raw[3][index])
                         await self.bot.db.warn_db.update_warn(raw)
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BETA TEST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    # - - - - - - - - - - - - - - - Local Error Handler - - - - - - - - - - - - - - -
-    @mute.error
-    @unmute.error
-    @kick.error
-    @ban.error
-    @unban.error
-    @warn.error
-    async def local_errors(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            ctx.error_handled = True
-            error = error.original
-            if isinstance(
-                error, (discord.errors.Forbidden, Moderation.HierarchyIssues)
-            ):  # Handles hierarchy issues
-                embed = discord.Embed(
-                    title="<a:_:1000851617182142535>  Error!",
-                    description="> That user is a mod/admin",
-                    color=0x2F3136,
-                )
-                await ctx.send(embed=embed)
-            elif isinstance(
-                error, (discord.errors.NotFound, Moderation.PunishmentIssues)
-            ):  # Handles punishment issues
-                # if (error.code == 10026): # Unknown Ban # actually fuck it cos [or (str(error) == "egg")] no work
-                embed = discord.Embed(
-                    title="<a:_:1000851617182142535>  Error!",
-                    description="> Not a valid previously punished member.",
-                    color=0x2F3136,
-                )
-                await ctx.send(embed=embed)
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 async def setup(bot: HelperBot) -> None:
