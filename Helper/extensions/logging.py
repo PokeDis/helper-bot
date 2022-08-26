@@ -4,6 +4,7 @@ import datetime
 import io
 
 import discord
+from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
 from ..main import HelperBot
@@ -12,6 +13,24 @@ from ..main import HelperBot
 class Logger(commands.Cog):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
+
+    @staticmethod
+    async def merge_images(img1, img2) -> io.BytesIO:
+        asset1 = img1.with_size(256)
+        asset2 = img2.with_size(256)
+        img1 = Image.open(io.BytesIO(await asset1.read()))
+        img2 = Image.open(io.BytesIO(await asset2.read()))
+        write1 = ImageDraw.Draw(img1)
+        write2 = ImageDraw.Draw(img2)
+        write1.text((5, 5), "Before", fill=(255, 255, 255), font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20))
+        write2.text((5, 5), "After", fill=(255, 255, 255), font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20))
+        img = Image.new("RGBA", (512, 256))
+        img.paste(img1, (0, 0), img1)
+        img.paste(img2, (256, 0), img2)
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        return buffer
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:
@@ -55,6 +74,8 @@ class Logger(commands.Cog):
     async def on_message_edit(
         self, before: discord.Message, after: discord.Message
     ) -> None:
+        if after.author.bot:
+            return
         embed = discord.Embed(
             title="Edit Message",
             description=f"{after.author} edited their message in {after.channel.mention}.\n[Go to message]({after.jump_url})",
@@ -80,6 +101,8 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message) -> None:
+        if message.author.bot:
+            return
         embed = discord.Embed(
             title="Delete Message",
             description=f"{message.author} deleted their message in {message.channel.mention}",
@@ -167,12 +190,10 @@ class Logger(commands.Cog):
             await self.bot.logs.send(embed=embed)
         elif before.avatar != after.avatar:
             embed.description = f"{after.mention} has updated their avatar."
-            embed.add_field(name="Before", value=before.avatar.url)
-            embed.add_field(name="After", value=after.avatar.url)
-            embed.set_image(url=after.display_avatar)
-            embed2 = discord.Embed(title="Update User")
-            embed2.set_image(url=before.display_avatar)
-            await self.bot.logs.send(embeds=[embed, embed2])
+            img = await self.bot.loop.run_in_executor(None, self.merge_images, before.avatar, after.avatar)
+            file = discord.File(await img, filename="avatar_update.png")
+            embed.set_image(url="attachment://avatar_update.png")
+            await self.bot.logs.send(embed=embed, file=file)
         elif before.discriminator != after.discriminator:
             embed.description = f"{after.mention} has updated their discriminator."
             embed.add_field(name="Before", value=f"{before.discriminator}")
@@ -204,12 +225,10 @@ class Logger(commands.Cog):
             await self.bot.logs.send(embed=embed)
         elif before.guild_avatar != after.guild_avatar:
             embed.description = f"{after.mention} has updated their guild avatar."
-            embed.add_field(name="Before", value=before.guild_avatar.url)
-            embed.add_field(name="After", value=after.guild_avatar.url)
-            embed.set_image(url=after.guild_avatar.url)
-            embed2 = discord.Embed(title="Update Member")
-            embed2.set_image(url=before.display_avatar)
-            await self.bot.logs.send(embeds=[embed, embed2])
+            img = await self.bot.loop.run_in_executor(None, self.merge_images, before.guild_avatar, after.guild_avatar)
+            file = discord.File(await img, filename="guild_avatar.png")
+            embed.set_image(url="attachment://guild_avatar.png")
+            await self.bot.logs.send(embed=embed, file=file)
         else:
             pass
 
