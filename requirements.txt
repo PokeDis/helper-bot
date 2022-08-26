@@ -3,3 +3,4 @@ asyncpg
 python-dotenv
 humanfriendly
 chat_exporter
+pillow
