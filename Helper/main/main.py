@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from Helper.extensions.giveaway import GiveawayJoinView
 from Helper.extensions.ticket import (InsideTicketView, TicketCloseView,
                                       TicketCreateView)
 
@@ -35,6 +36,7 @@ class HelperBot(commands.Bot):
         self.add_view(TicketCreateView())
         self.add_view(InsideTicketView())
         self.add_view(TicketCloseView())
+        self.add_view(GiveawayJoinView(self))
         self.db = Database()
         await self.db.setup()
         self.launch_time = discord.utils.utcnow()

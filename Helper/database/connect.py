@@ -19,6 +19,7 @@ class Database:
         self.tag_db = TagDB()
         self.rep_db = RepDB()
         self.rep_cd_db = RepCooldownDB()
+        self.giveaway_db = GiveawayDB()
 
     async def setup(self) -> None:
         self.database_pool = await asyncpg.create_pool(
@@ -34,3 +35,4 @@ class Database:
         await self.warn_db.setup(self)
         await self.rep_db.setup(self)
         await self.rep_cd_db.setup(self)
+        await self.giveaway_db.setup(self)

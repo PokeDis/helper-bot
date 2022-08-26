@@ -170,7 +170,7 @@ class Logger(commands.Cog):
             embed.add_field(name="Before", value=before.avatar.url)
             embed.add_field(name="After", value=after.avatar.url)
             embed.set_image(url=after.display_avatar)
-            embed2 = embed.copy()
+            embed2 = discord.Embed(title="Update User")
             embed2.set_image(url=before.display_avatar)
             await self.bot.logs.send(embeds=[embed, embed2])
         elif before.discriminator != after.discriminator:
@@ -207,7 +207,7 @@ class Logger(commands.Cog):
             embed.add_field(name="Before", value=before.guild_avatar.url)
             embed.add_field(name="After", value=after.guild_avatar.url)
             embed.set_image(url=after.guild_avatar.url)
-            embed2 = embed.copy()
+            embed2 = discord.Embed(title="Update Member")
             embed2.set_image(url=before.display_avatar)
             await self.bot.logs.send(embeds=[embed, embed2])
         else:
@@ -469,6 +469,8 @@ class Logger(commands.Cog):
     async def on_presence_update(
         self, before: discord.Member, after: discord.Member
     ) -> None:
+        if after.bot:
+            return
         embed = discord.Embed(
             title="Update Presence",
             description=f"{after.mention} has updated their presence.",

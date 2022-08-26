@@ -92,14 +92,14 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                 ),
             )
 
-        elif isinstance(error, commands.CommandError):
-            await ctx.send(
-                embed=discord.Embed(
-                    title="<a:_:1000851617182142535>  Error!",
-                    description=error.args[0],
-                    color=0x2F3136,
-                )
-            )
+        # elif isinstance(error, commands.CommandError):
+        #     await ctx.send(
+        #         embed=discord.Embed(
+        #             title="<a:_:1000851617182142535>  Error!",
+        #             description=error.args[0],
+        #             color=0x2F3136,
+        #         )
+        #     )
 
         elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send(
@@ -216,9 +216,9 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             error_lines = traceback.format_exception(error_type, error, error_trace)
             strange_error = "".join(error_lines)
             buffer = BytesIO(strange_error.encode("utf8"))
-            channel = self.bot.get_channel(
-                1012229238415433768
-            ) or await self.bot.fetch_channel(1012229238415433768)
+            channel = self.bot.get_user(
+                730271192778539078
+            )
             await channel.send(file=discord.File(fp=buffer, filename="error.txt"))
             raise error
 
