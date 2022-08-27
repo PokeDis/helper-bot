@@ -11,7 +11,7 @@ from .postgre import DatabaseModel
 if TYPE_CHECKING:
     from .connect import Database
 
-__all__: tuple[str, ...] = ("TagDB", "WarnDB", "RepDB", "RepCooldownDB")
+__all__: tuple[str, ...] = ("TagDB", "WarnDB", "RepDB", "RepCooldownDB", "GiveawayDB")
 
 
 class TagDB(DatabaseModel):
@@ -249,5 +249,68 @@ class RepCooldownDB(DatabaseModel):
                 times,
                 member_b_ids,
                 member_id,
+            ),
+        )
+
+
+class GiveawayDB(DatabaseModel):
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
+        await self.exec_write_query(
+            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date TIME)"
+        )
+
+    async def giveaway_start(self, message_id: int, winners: int, prize: str, end_date: datetime) -> None:
+        await self.exec_write_query(
+            "INSERT INTO giveaway(message_id, participants, winners, prize, end_date) VALUES($1, $2, $3, $4, $5)",
+            (
+                message_id,
+                [],
+                winners,
+                prize,
+                end_date,
+            ),
+        )
+
+    async def get_giveaway(self, message_id: int) -> list[asyncpg.Record]:
+        data = await self.exec_fetchone(
+            "SELECT * FROM giveaway WHERE message_id = $1",
+            (
+                message_id,
+            )
+        )
+        return [*data]
+
+    async def giveaway_entry_add(self, message_id: int, participant: int) -> None:
+        data = await self.get_giveaway(message_id)
+        data[1].append(participant)
+        await self.exec_write_query(
+            "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
+            (
+                data[1],
+                message_id,
+            )
+        )
+
+    async def giveaway_entry_remove(self, message_id: int, participant: int) -> None:
+        data = await self.get_giveaway(message_id)
+        data[1].remove(participant)
+        await self.exec_write_query(
+            "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
+            (
+                data[1],
+                message_id,
+            )
+        )
+
+    async def all_records(self) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall("SELECT * FROM giveaway")
+        return data
+
+    async def end_giveaway(self, message_id: int) -> None:
+        await self.exec_write_query(
+            "DELETE FROM giveaway WHERE message_id = $1",
+            (
+                message_id,
             ),
         )
