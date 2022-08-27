@@ -1,9 +1,9 @@
 import asyncio
 import random
-import discord
-
-from discord.ext import commands
 from datetime import datetime, timedelta
+
+import discord
+from discord.ext import commands
 
 from ..utils import DurationCoverter
 
@@ -32,7 +32,9 @@ class GiveawayJoinView(discord.ui.View):
             full_time = discord.utils.format_dt(end_time, style="f")
             for embed in interaction.message.embeds:
                 description = embed.to_dict()["description"]
-                host = self.bot.get_user(int(description[ description.find("@") : description.find(">") ]))
+                host = self.bot.get_user(
+                    int(description[description.find("@") : description.find(">")])
+                )
             updated_embed = discord.Embed(
                 title=f"{data[3]}",
                 description=f"""
@@ -40,10 +42,12 @@ class GiveawayJoinView(discord.ui.View):
                 Hosted by: {host.mention}
                 Entries: {len(data[1]) + 1}
                 Winners: {data[2]}
-                """
+                """,
             )
             updated_embed.timestamp = end_time
-            await self.bot.db.giveaway_db.giveaway_entry_add(interaction.message.id, interaction.user.id)
+            await self.bot.db.giveaway_db.giveaway_entry_add(
+                interaction.message.id, interaction.user.id
+            )
             await interaction.edit_original_message(embed=updated_embed)
             await interaction.followup.send("joined bancho", ephemeral=True)
 
@@ -68,14 +72,15 @@ class GiveawayLeaveView(discord.ui.View):
     async def leave_giveaway(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await self.bot.db.giveaway_db.giveaway_entry_remove(self.message_id, interaction.user.id)
+        await self.bot.db.giveaway_db.giveaway_entry_remove(
+            self.message_id, interaction.user.id
+        )
         await interaction.edit_original_message("left bancho", ephemeral=True)
 
 
 class Giveaway(commands.Cog, description="Giveaway commands."):
     def __init__(self, bot) -> None:
         self.bot = bot
-
 
     @commands.command()
     @commands.has_permissions(manage_guild=True)
@@ -86,7 +91,7 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
         winners: int,
         duration: DurationCoverter,
         *,
-        prize: str
+        prize: str,
     ) -> None:
         duration: timedelta = duration  # type: ignore
         if duration.total_seconds() < 1209600:
@@ -101,11 +106,13 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
                 Hosted by: {ctx.author.mention}
                 Entries: 0
                 Winners: {winners}
-                """
+                """,
             )
             embed.timestamp = end_time
             message = await ctx.send(embed=embed, view=view)
-            await self.bot.db.giveaway_db.giveaway_start(message.id, winners, prize, end_time)
+            await self.bot.db.giveaway_db.giveaway_start(
+                message.id, winners, prize, end_time
+            )
             await asyncio.sleep(duration.total_seconds())
             data = await self.bot.db.giveaway_db.get_giveaway(message.id)
             if len(data[1]) >= data[2]:
@@ -116,7 +123,9 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
             await ctx.send("no. of ppl joined < no. of winners to be declared.")
             # await self.bot.db.giveaway_db.end_giveaway(message.id)
         else:
-            await ctx.send("You cannot create a giveaway which lasts for more then 2 weeks.")
+            await ctx.send(
+                "You cannot create a giveaway which lasts for more then 2 weeks."
+            )
 
 
 async def setup(bot) -> None:

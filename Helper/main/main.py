@@ -12,7 +12,6 @@ from Helper.extensions.ticket import (InsideTicketView, TicketCloseView,
 
 from ..database import Database
 
-
 load_dotenv()
 
 

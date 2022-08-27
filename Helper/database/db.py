@@ -11,7 +11,14 @@ from .postgre import DatabaseModel
 if TYPE_CHECKING:
     from .connect import Database
 
-__all__: tuple[str, ...] = ("TagDB", "WarnDB", "RepDB", "RepCooldownDB", "GiveawayDB")
+__all__: tuple[str, ...] = (
+    "TagDB",
+    "WarnDB",
+    "RepDB",
+    "RepCooldownDB",
+    "GiveawayDB",
+    "ReminderDB",
+)
 
 
 class TagDB(DatabaseModel):
@@ -260,7 +267,9 @@ class GiveawayDB(DatabaseModel):
             "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date TIME)"
         )
 
-    async def giveaway_start(self, message_id: int, winners: int, prize: str, end_date: datetime) -> None:
+    async def giveaway_start(
+        self, message_id: int, winners: int, prize: str, end_date: datetime
+    ) -> None:
         await self.exec_write_query(
             "INSERT INTO giveaway(message_id, participants, winners, prize, end_date) VALUES($1, $2, $3, $4, $5)",
             (
@@ -274,10 +283,7 @@ class GiveawayDB(DatabaseModel):
 
     async def get_giveaway(self, message_id: int) -> list[asyncpg.Record]:
         data = await self.exec_fetchone(
-            "SELECT * FROM giveaway WHERE message_id = $1",
-            (
-                message_id,
-            )
+            "SELECT * FROM giveaway WHERE message_id = $1", (message_id,)
         )
         return [*data]
 
@@ -289,7 +295,7 @@ class GiveawayDB(DatabaseModel):
             (
                 data[1],
                 message_id,
-            )
+            ),
         )
 
     async def giveaway_entry_remove(self, message_id: int, participant: int) -> None:
@@ -300,7 +306,7 @@ class GiveawayDB(DatabaseModel):
             (
                 data[1],
                 message_id,
-            )
+            ),
         )
 
     async def all_records(self) -> list[asyncpg.Record]:
@@ -310,7 +316,39 @@ class GiveawayDB(DatabaseModel):
     async def end_giveaway(self, message_id: int) -> None:
         await self.exec_write_query(
             "DELETE FROM giveaway WHERE message_id = $1",
-            (
-                message_id,
-            ),
+            (message_id,),
+        )
+
+
+class ReminderDB(DatabaseModel):
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
+        await self.exec_write_query(
+            "CREATE TABLE IF NOT EXISTS reminder (message_id BIGINT, time FLOAT, channel_id BIGINT, author BIGINT, message TEXT)"
+        )
+
+    async def add_reminder(self, data: list) -> None:
+        await self.exec_write_query(
+            "INSERT INTO reminder (message_id, time, channel_id, author, message) VALUES ($1, $2, $3, $4, $5)",
+            (*data,),
+        )
+
+    async def get_all(self) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall("SELECT * FROM reminder")
+        return data
+
+    async def get_by_time(self, time: float) -> list[asyncpg.Record]:
+        time = datetime.fromtimestamp(time)
+        data = await self.get_all()
+        timeout = []
+        for i in data:
+            in_time = datetime.fromtimestamp(i[1])
+            left = time - in_time
+            if left.total_seconds() < 0:
+                timeout.append(i)
+        return timeout
+
+    async def remove_reminder(self, _id: int) -> None:
+        await self.exec_write_query(
+            "DELETE FROM reminder WHERE message_id = $1", (_id,)
         )

@@ -4,8 +4,8 @@ import datetime
 import io
 
 import discord
-from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
 from ..main import HelperBot
 
@@ -22,8 +22,18 @@ class Logger(commands.Cog):
         img2 = Image.open(io.BytesIO(await asset2.read()))
         write1 = ImageDraw.Draw(img1)
         write2 = ImageDraw.Draw(img2)
-        write1.text((5, 5), "Before", fill=(255, 255, 255), font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20))
-        write2.text((5, 5), "After", fill=(255, 255, 255), font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20))
+        write1.text(
+            (5, 5),
+            "Before",
+            fill=(255, 255, 255),
+            font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20),
+        )
+        write2.text(
+            (5, 5),
+            "After",
+            fill=(255, 255, 255),
+            font=ImageFont.truetype("Helper/assets/fonts/Roboto-Bold.ttf", 20),
+        )
         img = Image.new("RGBA", (512, 256))
         img.paste(img1, (0, 0), img1)
         img.paste(img2, (256, 0), img2)
@@ -190,7 +200,9 @@ class Logger(commands.Cog):
             await self.bot.logs.send(embed=embed)
         elif before.avatar != after.avatar:
             embed.description = f"{after.mention} has updated their avatar."
-            img = await self.bot.loop.run_in_executor(None, self.merge_images, before.avatar, after.avatar)
+            img = await self.bot.loop.run_in_executor(
+                None, self.merge_images, before.avatar, after.avatar
+            )
             file = discord.File(await img, filename="avatar_update.png")
             embed.set_image(url="attachment://avatar_update.png")
             await self.bot.logs.send(embed=embed, file=file)
@@ -225,7 +237,9 @@ class Logger(commands.Cog):
             await self.bot.logs.send(embed=embed)
         elif before.guild_avatar != after.guild_avatar:
             embed.description = f"{after.mention} has updated their guild avatar."
-            img = await self.bot.loop.run_in_executor(None, self.merge_images, before.guild_avatar, after.guild_avatar)
+            img = await self.bot.loop.run_in_executor(
+                None, self.merge_images, before.guild_avatar, after.guild_avatar
+            )
             file = discord.File(await img, filename="guild_avatar.png")
             embed.set_image(url="attachment://guild_avatar.png")
             await self.bot.logs.send(embed=embed, file=file)
