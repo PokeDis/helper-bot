@@ -284,7 +284,6 @@ class GiveawayDB(DatabaseModel):
     async def giveaway_entry_add(self, message_id: int, participant: int) -> None:
         data = await self.get_giveaway(message_id)
         data[1].append(participant)
-        print(data)
         await self.exec_write_query(
             "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
             (
