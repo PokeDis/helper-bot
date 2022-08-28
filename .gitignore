@@ -24,3 +24,4 @@ Helper/database/__pycache__/connect.cpython-39.pyc
 Helper/extensions/__pycache__/giveaway.cpython-39.pyc
 Helper/extensions/__pycache__/logging.cpython-39.pyc
 Helper/extensions/__pycache__/mod.cpython-39.pyc
+Helper/extensions/__pycache__/reminder.cpython-39.pyc

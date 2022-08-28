@@ -1,8 +1,9 @@
 import asyncio
 import random
-from datetime import datetime, timedelta
-
 import discord
+import re
+
+from datetime import datetime, timedelta
 from discord.ext import commands
 
 from ..utils import DurationCoverter
@@ -21,35 +22,38 @@ class GiveawayJoinView(discord.ui.View):
     async def join_giveaway(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        await interaction.response.defer()
-        data = await self.bot.db.giveaway_db.get_giveaway(interaction.message.id)
-        if interaction.user.id in data[1]:
-            view = GiveawayLeaveView(self.bot, interaction.message.id)
-            await interaction.followup.send("leave bancho", view=view, ephemeral=True)
-        else:
-            end_time = data[4]
-            relative_time = discord.utils.format_dt(end_time, style="R")
-            full_time = discord.utils.format_dt(end_time, style="f")
-            for embed in interaction.message.embeds:
-                description = embed.to_dict()["description"]
-                host = self.bot.get_user(
-                    int(description[description.find("@") : description.find(">")])
+        try:
+            await interaction.response.defer()
+            data = await self.bot.db.giveaway_db.get_giveaway(interaction.message.id)
+            if interaction.user.id in data[1]:
+                view = GiveawayLeaveView(self.bot, interaction.message.id)
+                await interaction.followup.send("leave bancho", view=view, ephemeral=True)
+            else:
+                end_time = data[4]
+                relative_time = discord.utils.format_dt(end_time, style="R")
+                full_time = discord.utils.format_dt(end_time, style="f")
+                for embed in interaction.message.embeds:
+                    description = embed.to_dict()["description"]
+                    host = self.bot.get_user(
+                        int(re.findall('<@!?([0-9]+)>', description)[0])
+                    )
+                updated_embed = discord.Embed(
+                    title=f"{data[3]}",
+                    description=f"""
+                    Ends: {relative_time} ({full_time})
+                    Hosted by: {host.mention}
+                    Entries: {len(data[1]) + 1}
+                    Winners: {data[2]}
+                    """,
                 )
-            updated_embed = discord.Embed(
-                title=f"{data[3]}",
-                description=f"""
-                Ends: {relative_time} ({full_time})
-                Hosted by: {host.mention}
-                Entries: {len(data[1]) + 1}
-                Winners: {data[2]}
-                """,
-            )
-            updated_embed.timestamp = end_time
-            await self.bot.db.giveaway_db.giveaway_entry_add(
-                interaction.message.id, interaction.user.id
-            )
-            await interaction.edit_original_message(embed=updated_embed)
-            await interaction.followup.send("joined bancho", ephemeral=True)
+                updated_embed.timestamp = end_time
+                await self.bot.db.giveaway_db.giveaway_entry_add(
+                    interaction.message.id, interaction.user.id
+                )
+                await interaction.edit_original_message(embed=updated_embed)
+                await interaction.followup.send("joined bancho", ephemeral=True)
+        except Exception as e:
+            print(e)
 
 
 class GiveawayLeaveView(discord.ui.View):
@@ -57,12 +61,6 @@ class GiveawayLeaveView(discord.ui.View):
         super().__init__(timeout=30)
         self.bot = bot
         self.message_id = message_id
-        self.response = None
-
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-        await self.response.edit(view=self)
 
     @discord.ui.button(
         label="Leave Giveaway",

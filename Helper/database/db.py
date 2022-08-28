@@ -264,7 +264,7 @@ class GiveawayDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date TIME)"
+            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date TIMESTAMP)"
         )
 
     async def giveaway_start(

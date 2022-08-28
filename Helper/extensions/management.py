@@ -107,6 +107,11 @@ class Management(commands.Cog, description="Management commands."):
             for reaction in reactions[: len(options)]:
                 await poll_message.add_reaction(reaction)
 
+    @commands.command()
+    @commands.is_owner()
+    async def drop(self, ctx: commands.Context):
+        await self.bot.db.giveaway_db.exec_write_query("DROP TABLE giveaway")
+
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Management(bot))

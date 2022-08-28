@@ -1,23 +1,12 @@
 import asyncio
 import datetime
-import typing
 
 import humanfriendly
 from discord.ext import commands, tasks
 
-from custom_durations import Duration
+from ..utils import DurationCoverter
 
 from ..main import HelperBot
-
-
-class DurationCoverter(commands.Converter):
-
-    total_seconds: typing.Callable[[], int]
-
-    async def convert(self, ctx: commands.Context, args: str) -> datetime.timedelta:
-        args = args.strip()
-        time = Duration(args)
-        return datetime.timedelta(seconds=time.to_seconds())
 
 
 class Reminder(commands.Cog):
@@ -25,14 +14,15 @@ class Reminder(commands.Cog):
         self.bot = bot
 
     @commands.command(
-        name="remind",
-        aliases=["reminder", "remindme"],
+        name="remindme",
+        aliases=["reminder", "remind"],
         description="Reminds you of something.",
     )
-    async def remind(
-        self, ctx: commands.Context, reminder: DurationCoverter, *, message: str = "None"
+    async def remindme(
+        self, ctx: commands.Context, duration: DurationCoverter, *, message: str = "None"
     ) -> None:
-        time = datetime.datetime.utcnow() + reminder
+        duration: datetime.timedelta = duration  # type: ignore
+        time = datetime.datetime.utcnow() + duration
         data = [
             ctx.message.id,
             time.timestamp(),
@@ -41,11 +31,11 @@ class Reminder(commands.Cog):
             message,
         ]
         await self.bot.db.reminder_db.add_reminder(data)
-        await ctx.reply(
-            f"I will remind you in {humanfriendly.format_timespan(reminder.total_seconds())}."
+        msg = await ctx.send(
+            f"I will remind you in {humanfriendly.format_timespan(duration.total_seconds())}."
         )
-        await asyncio.sleep(reminder.total_seconds())
-        await ctx.reply(f"{ctx.author.mention}\n**Reminder:** {message}")
+        await asyncio.sleep(duration.total_seconds())
+        await msg.reply(f"{ctx.author.mention}\n**Reminder:** {message}")
         await self.bot.db.reminder_db.remove_reminder(ctx.message.id)
 
     @tasks.loop(seconds=20)
