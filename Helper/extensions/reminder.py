@@ -13,30 +13,48 @@ class Reminder(commands.Cog):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
 
-    @commands.command(
-        name="remindme",
-        aliases=["reminder", "remind"],
+    @commands.group(
+        name="reminder",
+        aliases=["remindme", "remind"],
         description="Reminds you of something.",
+        invoke_without_command=True,
     )
-    async def remindme(
+    @commands.guild_only()
+    async def reminder(
         self, ctx: commands.Context, duration: DurationCoverter, *, message: str = "None"
     ) -> None:
         duration: datetime.timedelta = duration  # type: ignore
         time = datetime.datetime.utcnow() + duration
-        data = [
-            ctx.message.id,
-            time.timestamp(),
-            ctx.message.channel.id,
-            ctx.author.id,
-            message,
-        ]
-        await self.bot.db.reminder_db.add_reminder(data)
-        msg = await ctx.send(
-            f"I will remind you in {humanfriendly.format_timespan(duration.total_seconds())}."
-        )
-        await asyncio.sleep(duration.total_seconds())
-        await msg.reply(f"{ctx.author.mention}\n**Reminder:** {message}")
-        await self.bot.db.reminder_db.remove_reminder(ctx.message.id)
+        if ctx.invoked_subcommand is None:
+            msg = await ctx.send(
+                f"I will remind you in {humanfriendly.format_timespan(duration.total_seconds())}."
+            )
+            data = [
+                msg.id,
+                time.timestamp(),
+                ctx.message.channel.id,
+                ctx.author.id,
+                message,
+            ]
+            await self.bot.db.reminder_db.add_reminder(data)
+            await asyncio.sleep(duration.total_seconds())
+            data = await self.bot.db.reminder_db.get_one(msg.id)
+            if len(data):
+                await msg.reply(f"{ctx.author.mention}\n**Reminder:** {message}")
+                await self.bot.db.reminder_db.remove_reminder(msg.id)
+
+    @reminder.command(
+        name="delete",
+        description="Delete a reminder."
+    )
+    @commands.guild_only()
+    async def _delete(self, ctx: commands.Context, reminder_id: int) -> None:
+        data = await self.bot.db.reminder_db.get_one(reminder_id)
+        if len(data):
+            await ctx.send("Reminder Deleted.")
+            await self.bot.db.reminder_db.remove_reminder(reminder_id)
+            return
+        await ctx.send("No such reminder found.")
 
     @tasks.loop(seconds=20)
     async def check_reminders(self) -> None:

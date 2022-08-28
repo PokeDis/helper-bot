@@ -45,9 +45,9 @@ class GiveawayJoinView(discord.ui.View):
             interaction.message.id, interaction.user.id
         )
         if check:
-            await interaction.followup.send("joined bancho", ephemeral=True)
+            await interaction.followup.send("Joined the giveaway!", ephemeral=True)
         else:
-            await interaction.followup.send("leave bancho", ephemeral=True)
+            await interaction.followup.send("Left the giveaway.", ephemeral=True)
         embed = await self.make_base_embed(self.bot, interaction.message.id)
         await interaction.edit_original_response(embed=embed)
 
@@ -95,17 +95,62 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
             )
             await asyncio.sleep(duration.total_seconds())
             data = await self.bot.db.giveaway_db.get_giveaway(message.id)
-            if len(data[1]) >= data[2]:
-                winner_list = random.sample(data[1], k=data[2])
-                await ctx.send(", ".join(map(str, winner_list)))
+            if not data[7]:
+                if len(data[1]) >= data[2]:
+                    winner_list = random.sample(data[1], k=data[2])
+                    await ctx.send(", ".join(map(str, winner_list)))
+                    await self.bot.db.giveaway_db.update_bool(message.id)
+                    return
+                await ctx.send(""":boom: I couldn't determine a winner for that giveaway...
+                **Reason:** Less number of people joined than winners to be declared.
+                """)
                 await self.bot.db.giveaway_db.end_giveaway(message.id)
-                return
-            await ctx.send("no. of ppl joined < no. of winners to be declared.")
-            await self.bot.db.giveaway_db.end_giveaway(message.id)
+            else:
+                pass
         else:
             await ctx.send(
                 "You cannot create a giveaway which lasts for more then 2 weeks."
             )
+
+    @commands.command()
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def gend(
+        self,
+        ctx: commands.Context,
+        message_id: int
+    ) -> None:
+        data = await self.bot.db.giveaway_db.get_giveaway(message_id)
+        if len(data) and not data[7]:
+            if len(data[1]) >= data[2]:
+                winner_list = random.sample(data[1], k=data[2])
+                await ctx.send(", ".join(map(str, winner_list)))
+                await self.bot.db.giveaway_db.update_bool(message_id)
+                return
+            await ctx.send(""":boom: I couldn't determine a winner for that giveaway...
+            **Reason:** Less number of people joined than winners to be declared.
+            """)
+            await self.bot.db.giveaway_db.end_giveaway(message_id)
+        else:
+            await ctx.send(""":boom: I couldn't determine a winner for that giveaway...
+            **Reason:** Giveaway might already have been ended! Please re-check `message_id`.
+            """)
+
+    @commands.command()
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def greroll(
+        self,
+        ctx: commands.Context,
+        message_id: int
+    ) -> None:
+        data = await self.bot.db.giveaway_db.get_giveaway(message_id)
+        if len(data) and data[7]:
+            await ctx.send(f"{random.choice(data[1])}")
+            return
+        await ctx.send(""":boom: I couldn't determine a winner for that giveaway...
+        **Reason:** Giveaway might already have been expired! Please re-check `message_id`.
+        """)
 
     @tasks.loop(seconds=20)
     async def update_giveaway(self):
@@ -121,13 +166,27 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
             if len(record[1]) >= record[2]:
                 winner_list = random.sample(record[1], k=record[2])
                 await channel.send(", ".join(map(str, winner_list)))
+                await self.bot.db.giveaway_db.update_bool(record[0])
             else:
-                await channel.send("no. of ppl joined < no. of winners to be declared.")
-            await self.bot.db.giveaway_db.end_giveaway(message.id)
+                await channel.send(""":boom: I couldn't determine a winner for that giveaway...
+                **Reason:** Less number of people joined than winners to be declared.
+                """)
+                await self.bot.db.giveaway_db.end_giveaway(message.id)
+
+    @tasks.loop(minutes=30)
+    async def delete_giveaway(self):
+        time = datetime.now()
+        data = await self.bot.db.giveaway_db.all_records()
+        for record in data:
+            delete_time = datetime.fromtimestamp(record[4]) + timedelta(hours=24)
+            left = delete_time - time
+            if left.total_seconds() <= 0:
+                return await self.bot.db.giveaway_db.end_giveaway(record[0])
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.update_giveaway.start()
+        self.delete_giveaway.start()
 
 
 async def setup(bot) -> None:

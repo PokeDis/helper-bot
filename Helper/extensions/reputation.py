@@ -95,22 +95,27 @@ class Reputation(
         return await ctx.send(embed=embed)
 
     @rep.command(
-        brief="Remove -1 rep from a member", help="Remove -1 rep from a member."
+        brief="Remove certain amount of rep from a member", help="Remove certain amount of rep from a member."
     )
     @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def take(
-        self, ctx: commands.Context, member: discord.Member
+        self, ctx: commands.Context, member: discord.Member, amount: int
     ) -> Optional[discord.Message]:
         embed1 = discord.Embed(
             title="<a:_:1000859478217994410>  Success",
-            description=f"> Removed -1 rep from {member.mention}.",
+            description=f"> Removed {amount} rep from {member.mention}.",
             colour=0x2F3136,
         )
         embed2 = discord.Embed(
             title="<a:_:1000851617182142535>  L",
             description=f"> {member.mention}'s rep is already 0.",
+            colour=0x2F3136,
+        )
+        embed3 = discord.Embed(
+            title="<a:_:1000851617182142535>  Nu uh!",
+            description=f"> Cannot remove rep more than what they have.",
             colour=0x2F3136,
         )
         data = await self.bot.db.rep_db.get_rep(member.id)
@@ -119,7 +124,9 @@ class Reputation(
         s = await self.bot.db.rep_db.get_rep(member.id)
         if s[1] == 0:
             return await ctx.send(embed=embed2)
-        new_rep = s[1] - 1
+        if s[1] - amount <= 0:
+            return await ctx.send(embed=embed3)
+        new_rep = s[1] - amount
         await self.bot.db.rep_db.update_rep(member.id, new_rep)
         return await ctx.send(embed=embed1)
 

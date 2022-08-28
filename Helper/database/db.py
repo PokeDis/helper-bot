@@ -264,7 +264,7 @@ class GiveawayDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date FLOAT, host BIGINT, channel BIGINT)"
+            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date FLOAT, host BIGINT, channel BIGINT, end_check BOOLEAN DEFAULT FALSE)"
         )
 
     async def giveaway_start(
@@ -293,7 +293,9 @@ class GiveawayDB(DatabaseModel):
         data = await self.exec_fetchone(
             "SELECT * FROM giveaway WHERE message_id = $1", (message_id,)
         )
-        return [*data]
+        if data:
+            return [*data]
+        return []
 
     async def giveaway_click(self, message_id: int, user_id: int) -> bool:
         data = await self.get_giveaway(message_id)
@@ -329,9 +331,17 @@ class GiveawayDB(DatabaseModel):
         for record in data:
             in_time = datetime.fromtimestamp(record[4])
             left = in_time - time
-            if left.total_seconds() <= 0:
+            if left.total_seconds() <= 0 and not record[7]:
                 timeout.append(record)
         return timeout
+
+    async def update_bool(self, message_id: int) -> None:
+        await self.exec_write_query(
+            "UPDATE giveaway SET end_check = TRUE WHERE message_id = $1",
+            (
+                message_id,
+            ),
+        )
 
 
 class ReminderDB(DatabaseModel):
@@ -350,6 +360,14 @@ class ReminderDB(DatabaseModel):
     async def get_all(self) -> list[asyncpg.Record]:
         data = await self.exec_fetchall("SELECT * FROM reminder")
         return data
+
+    async def get_one(self, message_id: int) -> list[asyncpg.Record]:
+        data = await self.exec_fetchone(
+            "SELECT * FROM reminder WHERE message_id = $1", (message_id,)
+        )
+        if data:
+            return [*data]
+        return []
 
     async def get_by_time(self, time: float) -> list[asyncpg.Record]:
         time = datetime.fromtimestamp(time)
