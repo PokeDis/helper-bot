@@ -264,20 +264,28 @@ class GiveawayDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date TIME)"
+            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date FLOAT, host BIGINT, channel BIGINT)"
         )
 
     async def giveaway_start(
-        self, message_id: int, winners: int, prize: str, end_date: datetime
+        self,
+        message_id: int,
+        winners: int,
+        prize: str,
+        end_date: float,
+        host: int,
+        channel: int,
     ) -> None:
         await self.exec_write_query(
-            "INSERT INTO giveaway(message_id, participants, winners, prize, end_date) VALUES($1, $2, $3, $4, $5)",
+            "INSERT INTO giveaway(message_id, participants, winners, prize, end_date, host, channel) VALUES($1, $2, $3, $4, $5, $6, $7)",
             (
                 message_id,
                 [],
                 winners,
                 prize,
                 end_date,
+                host,
+                channel,
             ),
         )
 
@@ -287,9 +295,14 @@ class GiveawayDB(DatabaseModel):
         )
         return [*data]
 
-    async def giveaway_entry_add(self, message_id: int, participant: int) -> None:
+    async def giveaway_click(self, message_id: int, user_id: int) -> bool:
         data = await self.get_giveaway(message_id)
-        data[1].append(participant)
+        if user_id in data[1]:
+            data[1].remove(user_id)
+            check = False
+        else:
+            data[1].append(user_id)
+            check = True
         await self.exec_write_query(
             "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
             (
@@ -297,17 +310,7 @@ class GiveawayDB(DatabaseModel):
                 message_id,
             ),
         )
-
-    async def giveaway_entry_remove(self, message_id: int, participant: int) -> None:
-        data = await self.get_giveaway(message_id)
-        data[1].remove(participant)
-        await self.exec_write_query(
-            "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
-            (
-                data[1],
-                message_id,
-            ),
-        )
+        return check
 
     async def all_records(self) -> list[asyncpg.Record]:
         data = await self.exec_fetchall("SELECT * FROM giveaway")
@@ -318,6 +321,19 @@ class GiveawayDB(DatabaseModel):
             "DELETE FROM giveaway WHERE message_id = $1",
             (message_id,),
         )
+
+    async def by_time(self, time: float) -> list[asyncpg.Record]:
+        time = datetime.fromtimestamp(time)
+        data = await self.all_records()
+        print(data)
+        timeout = []
+        for record in data:
+            in_time = datetime.fromtimestamp(record[4])
+            left = in_time - time
+            print(left)
+            if left.total_seconds() <= 0:
+                timeout.append(record)
+        return timeout
 
 
 class ReminderDB(DatabaseModel):
@@ -343,7 +359,7 @@ class ReminderDB(DatabaseModel):
         timeout = []
         for i in data:
             in_time = datetime.fromtimestamp(i[1])
-            left = time - in_time
+            left = in_time - time
             if left.total_seconds() < 0:
                 timeout.append(i)
         return timeout

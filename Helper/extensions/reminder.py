@@ -30,9 +30,13 @@ class Reminder(commands.Cog):
         description="Reminds you of something.",
     )
     async def remind(
-        self, ctx: commands.Context, reminder: DurationCoverter, *, message: str = "None"
+        self,
+        ctx: commands.Context,
+        reminder: DurationCoverter,
+        *,
+        message: str = "None",
     ) -> None:
-        time = datetime.datetime.utcnow() + reminder
+        time = datetime.datetime.utcnow() + reminder  # type: ignore
         data = [
             ctx.message.id,
             time.timestamp(),
