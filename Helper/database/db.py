@@ -325,12 +325,10 @@ class GiveawayDB(DatabaseModel):
     async def by_time(self, time: float) -> list[asyncpg.Record]:
         time = datetime.fromtimestamp(time)
         data = await self.all_records()
-        print(data)
         timeout = []
         for record in data:
             in_time = datetime.fromtimestamp(record[4])
             left = in_time - time
-            print(left)
             if left.total_seconds() <= 0:
                 timeout.append(record)
         return timeout

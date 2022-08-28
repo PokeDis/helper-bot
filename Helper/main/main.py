@@ -22,12 +22,15 @@ class HelperBot(commands.Bot):
     db: Database
     logs: discord.TextChannel
     LOGCHANNEL: int = 998285318987989063
-    TOKEN: str = os.getenv("TOKEN")
 
     def __init__(self) -> None:
+        intents = discord.Intents.default()
+        intents.members = True
+        intents.message_content = True
+        intents.reactions = True
         super().__init__(
             command_prefix=commands.when_mentioned_or("?"),
-            intents=discord.Intents.all(),
+            intents=intents,
             case_insensitive=True,
         )
 
@@ -51,5 +54,5 @@ class HelperBot(commands.Bot):
     async def on_ready(self) -> None:
         print(f"{self.user} is ready!")
 
-    async def start(self, token: str = TOKEN, *, reconnect: bool = True) -> None:
-        await super().start(token, reconnect=reconnect)
+    def run(self) -> None:
+        super().run(os.getenv("TOKEN"))

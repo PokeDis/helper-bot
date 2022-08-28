@@ -93,7 +93,6 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
                 hoster.id,
                 ctx.channel.id,
             )
-            print("added")
             await asyncio.sleep(duration.total_seconds())
             data = await self.bot.db.giveaway_db.get_giveaway(message.id)
             if len(data[1]) >= data[2]:
@@ -108,11 +107,10 @@ class Giveaway(commands.Cog, description="Giveaway commands."):
                 "You cannot create a giveaway which lasts for more then 2 weeks."
             )
 
-    @tasks.loop(seconds=20.0)
+    @tasks.loop(seconds=20)
     async def update_giveaway(self):
         time = datetime.now()
         records = await self.bot.db.giveaway_db.by_time(time.timestamp())
-        print(records)
         for record in records:
             channel = self.bot.get_channel(record[6]) or await self.bot.fetch_channel(
                 record[6]
