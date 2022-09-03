@@ -334,6 +334,7 @@ class Ticket(commands.Cog, description="Reaction ticket system to provide suppor
             color=discord.Color.blue(),
         )
         await create_channel.send(embed=embed, view=view)
+        await ctx.message.add_reaction("<:tick:1001136782508826777>")
 
     @_ticket.command(
         help="Add a member to the ticket"
