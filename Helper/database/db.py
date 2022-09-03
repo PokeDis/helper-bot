@@ -380,6 +380,12 @@ class ReminderDB(DatabaseModel):
                 timeout.append(i)
         return timeout
 
+    async def get_by_user(self, user_id: int) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall(
+            "SELECT * FROM reminder WHERE author = $1", (user_id,)
+        )
+        return data or []
+
     async def remove_reminder(self, _id: int) -> None:
         await self.exec_write_query(
             "DELETE FROM reminder WHERE message_id = $1", (_id,)

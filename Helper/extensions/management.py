@@ -7,11 +7,11 @@ from discord.ext import commands
 from ..main import HelperBot
 
 
-class Management(commands.Cog, description="Management commands."):
+class Management(commands.Cog, description="Server management and utility tools.\n`<input>` are mandatory and `[input]` are optional."):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
 
-    @commands.command()
+    @commands.command(help="Delete a number of messages from a channel")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def purge(self, ctx: commands.Context, count: int) -> None:
@@ -24,14 +24,32 @@ class Management(commands.Cog, description="Management commands."):
             oldest_first=False,
         )
 
-    @commands.command()
+    @commands.command(help="Change nickname of a member")
+    @commands.has_permissions(manage_nicknames=True)
+    @commands.guild_only()
+    async def nick(self, ctx: commands.Context, member: discord.Member, nick: Optional[str] = None) -> None:
+        nick = nick or member.name
+        if len(nick) <= 32 and (ctx.author.top_role >= member.top_role or member != ctx.guild.owner):
+            embed1 = discord.Embed(
+                description=f"<:tick:1001136782508826777> Nickname changed for {member.mention}.",
+                color=discord.Color.green())
+            await member.edit(nick=nick)
+            await ctx.send(embed=embed1)
+        else:
+            embed2 = discord.Embed(
+                description="<:no:1001136828738453514> You can't change nickname of this user.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed2)
+
+    @commands.command(help="Suggest something to get public opinions")
     @commands.guild_only()
     async def suggest(self, ctx: commands.Context, *, suggestion: str) -> None:
         suggestion_channel = discord.utils.get(
             ctx.guild.text_channels, name="suggestions"
         )
         suggestion_embed = discord.Embed(
-            description=f"**Suggestion**\n\n{suggestion}", colour=0x2F3136
+            description=f"**Suggestion**\n\n{suggestion}", color=discord.Color.blue()
         )
         suggestion_embed.set_author(
             name=f"{str(ctx.author)} - {ctx.author.id}",
@@ -43,16 +61,15 @@ class Management(commands.Cog, description="Management commands."):
         await message.add_reaction("👍")
         await message.add_reaction("👎")
         feedback_embed = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"> Your suggestion has been sent to {suggestion_channel.mention}.",
-            colour=0x2F3136,
+            description=f"<:tick:1001136782508826777> Your suggestion has been sent to {suggestion_channel.mention}.",
+            color=discord.Color.green()
         )
         feedback_embed.set_footer(
             text="The staff team will review your suggestion as soon as possible."
         )
         await ctx.send(embed=feedback_embed)
 
-    @commands.command()
+    @commands.command(help="Lock mentioned or current channel")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def lock(
@@ -62,9 +79,13 @@ class Management(commands.Cog, description="Management commands."):
         for role in ctx.guild.roles:
             if not role.permissions.administrator and not role.is_bot_managed():
                 await channel.set_permissions(role, send_messages=False)
-        await ctx.send(f"Locked {channel.mention}.")
+        embed = discord.Embed(
+            description=f"<:tick:1001136782508826777> Locked {channel.mention}.",
+            color=discord.Color.green()
+        )
+        await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(help="Unlock mentioned or current channel")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def unlock(
@@ -74,16 +95,28 @@ class Management(commands.Cog, description="Management commands."):
         for role in ctx.guild.roles:
             if not role.permissions.administrator and not role.is_bot_managed():
                 await channel.set_permissions(role, send_messages=True)
-        await ctx.send(f"Unlocked {channel.mention}.")
+        embed = discord.Embed(
+            description=f"<:tick:1001136782508826777> Unlocked {channel.mention}.",
+            color=discord.Color.green()
+        )
+        await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(help="Start a poll for people to vote on")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def poll(self, ctx: commands.Context, question: str, *options: str):
         if len(options) <= 1:
-            return await ctx.send("You need more than one option to make a poll!")
+            a_embed = discord.Embed(
+                description="<:no:1001136828738453514> You need more than one option to make a poll!",
+                color=discord.Color.red()
+            )
+            return await ctx.send(embed=a_embed)
         elif len(options) > 10:
-            return await ctx.send("You cannot make a poll for more than ten options!")
+            b_embed = discord.Embed(
+                description="<:no:1001136828738453514> You cannot make a poll for more than ten options!",
+                color=discord.Color.red()
+            )
+            return await ctx.send(embed=b_embed)
         else:
             reactions = [
                 "1️⃣",
@@ -99,7 +132,7 @@ class Management(commands.Cog, description="Management commands."):
             ]
             description = [f"{reactions[i]} {j}" for i, j in enumerate(options)]
             poll_embed = discord.Embed(
-                title=f"{question}", description="\n".join(description), colour=0x2F3136
+                title=f"{question}", description="\n".join(description), color=discord.Color.blue()
             )
             poll_embed.set_footer(text=f"Poll by {str(ctx.author)}")
             poll_embed.timestamp = discord.utils.utcnow()
@@ -112,6 +145,9 @@ class Management(commands.Cog, description="Management commands."):
     async def drop(self, ctx: commands.Context):
         await self.bot.db.giveaway_db.exec_write_query("DROP TABLE giveaway")
 
+    async def cog_load(self):
+        print(f"✅ Cog {self.qualified_name} was successfully loaded!")
+        
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Management(bot))

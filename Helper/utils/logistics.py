@@ -17,27 +17,27 @@ class Support:
         menu.add_pages(pages)
         back = ViewButton(
             style=discord.ButtonStyle.gray,
-            emoji="<:_:998564013212434462>",
+            emoji="<:ArrowLeft:989134685068202024>",
             custom_id=ViewButton.ID_PREVIOUS_PAGE,
         )
         turn = ViewButton(
             style=discord.ButtonStyle.gray,
-            emoji="<:_:998563574689583144>",
+            emoji="<:rightArrow:989136803284004874>",
             custom_id=ViewButton.ID_NEXT_PAGE,
         )
         stop = ViewButton(
             style=discord.ButtonStyle.gray,
-            emoji="<:_:998563829493534750>",
+            emoji="<:dustbin:989150297333043220>",
             custom_id=ViewButton.ID_END_SESSION,
         )
         ff = ViewButton(
             style=discord.ButtonStyle.gray,
-            emoji="<:_:998563714338914344>",
+            emoji="<:DoubleArrowRight:989134892384256011>",
             custom_id=ViewButton.ID_GO_TO_LAST_PAGE,
         )
         fb = ViewButton(
             style=discord.ButtonStyle.gray,
-            emoji="<:_:998563905993461851>",
+            emoji="<:DoubleArrowLeft:989134953142956152>",
             custom_id=ViewButton.ID_GO_TO_FIRST_PAGE,
         )
         menu.add_button(fb)

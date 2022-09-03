@@ -3,7 +3,6 @@ from typing import Optional
 
 import discord
 import humanfriendly
-from discord import app_commands
 from discord.ext import commands, tasks
 
 from ..main import HelperBot
@@ -15,7 +14,6 @@ class Reputation(
 ):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
-        self.clean_rep_cd.start()
 
     @staticmethod
     async def can_manage_rep(ctx: commands.Context, member_id: int) -> bool:
@@ -24,21 +22,20 @@ class Reputation(
 
         else:
             embed = discord.Embed(
-                title="<a:_:1000851617182142535>  Nu Uh!",
-                description=f"> You cant mess with your own rep.",
-                colour=0x2F3136,
+                description=f"<:no:1001136828738453514> You cant 'manage' rep.",
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed)
             return False
 
-    @commands.group(brief="Check your/others rep", help="Check your/others rep.")
+    @commands.group(help="Check your/others rep")
     @commands.guild_only()
     async def rep(
         self, ctx: commands.Context, member: Optional[discord.Member]
     ) -> Optional[discord.Message]:
         if ctx.invoked_subcommand is None:
             member = member or ctx.author
-            embed = discord.Embed(colour=0x2F3136)
+            embed = discord.Embed(color=discord.Color.blue())
             embed.set_author(name=f"{member.name}", icon_url=member.display_avatar)
 
             if not (rep_data := await self.bot.db.rep_db.get_rep(member.id)):
@@ -49,16 +46,15 @@ class Reputation(
             return await ctx.send(embed=embed)
         return None
 
-    @rep.command(brief="Give +1 rep to a member", help="Give +1 rep to a member.")
+    @rep.command(help="Give +1 rep to a member")
     @commands.cooldown(1, 120, commands.BucketType.user)
     @commands.guild_only()
     async def give(
         self, ctx: commands.Context, member: discord.Member
     ) -> Optional[discord.Message]:
         embed = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"> Gave +1 rep to {member.mention}.",
-            colour=0x2F3136,
+            description=f"<:tick:1001136782508826777> Gave +1 rep to {member.mention}.",
+            color=discord.Color.green(),
         )
 
         data = await self.bot.db.rep_cd_db.cd_log(ctx.author.id)
@@ -95,28 +91,24 @@ class Reputation(
         return await ctx.send(embed=embed)
 
     @rep.command(
-        brief="Remove certain amount of rep from a member", help="Remove certain amount of rep from a member."
+        help="Remove certain amount of rep from a member"
     )
-    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def take(
         self, ctx: commands.Context, member: discord.Member, amount: int
     ) -> Optional[discord.Message]:
         embed1 = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"> Removed {amount} rep from {member.mention}.",
-            colour=0x2F3136,
+            description=f"<:tick:1001136782508826777> Removed {amount} rep from {member.mention}.",
+            color=discord.Color.green(),
         )
         embed2 = discord.Embed(
-            title="<a:_:1000851617182142535>  L",
-            description=f"> {member.mention}'s rep is already 0.",
-            colour=0x2F3136,
+            description=f"<:no:1001136828738453514> {member.mention}'s rep is already 0.",
+            color=discord.Color.red(),
         )
         embed3 = discord.Embed(
-            title="<a:_:1000851617182142535>  Nu uh!",
-            description=f"> Cannot remove rep more than what they have.",
-            colour=0x2F3136,
+            description=f"<:no:1001136828738453514> Cannot remove rep more than what they have.",
+            color=discord.Color.red(),
         )
         data = await self.bot.db.rep_db.get_rep(member.id)
         if not data:
@@ -124,23 +116,21 @@ class Reputation(
         s = await self.bot.db.rep_db.get_rep(member.id)
         if s[1] == 0:
             return await ctx.send(embed=embed2)
-        if s[1] - amount <= 0:
+        if s[1] - amount < 0:
             return await ctx.send(embed=embed3)
         new_rep = s[1] - amount
         await self.bot.db.rep_db.update_rep(member.id, new_rep)
         return await ctx.send(embed=embed1)
 
-    @rep.command(brief="Reset a members rep to 0", help="Reset a members rep to 0.")
-    @app_commands.default_permissions(manage_messages=True)
+    @rep.command(help="Reset a members rep to 0")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def clear(
         self, ctx: commands.Context, member: discord.Member
     ) -> Optional[discord.Message]:
         embed = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"> {member.mention} rep reset to 0.",
-            colour=0x2F3136,
+            description=f"<:tick:1001136782508826777> {member.mention}'s rep reset to 0.",
+            color=discord.Color.green(),
         )
         data = await self.bot.db.rep_db.get_rep(member.id)
         if not data:
@@ -167,6 +157,15 @@ class Reputation(
                         raw[1].remove(raw[1][index])
                         raw[2].remove(raw[2][index])
                         await self.bot.db.rep_cd_db.update_cd(*raw)
+
+    @clean_rep_cd.before_loop
+    async def before_clean_rep_cd(self):
+        await self.bot.wait_until_ready()
+        print("🔃 Started Clean Reputation Cooldown loop.")
+
+    async def cog_load(self):
+        print(f"✅ Cog {self.qualified_name} was successfully loaded!")
+        self.clean_rep_cd.start()
 
 
 async def setup(bot: HelperBot) -> None:

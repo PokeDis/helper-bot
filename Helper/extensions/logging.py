@@ -47,7 +47,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Join",
             description=f"{member} has joined the server",
-            colour=discord.Colour.green(),
+            color=discord.Color.green(),
         )
         embed.add_field(
             name="Name", value=f"{member} [{member.id}]\n{member.mention}", inline=True
@@ -74,7 +74,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Leave",
             description=f"{member} has left the server",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=member.display_avatar)
         embed.timestamp = discord.utils.utcnow()
@@ -89,7 +89,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Edit Message",
             description=f"{after.author} edited their message in {after.channel.mention}.\n[Go to message]({after.jump_url})",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=after.author.display_avatar)
         embed.timestamp = discord.utils.utcnow()
@@ -116,7 +116,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Delete Message",
             description=f"{message.author} deleted their message in {message.channel.mention}",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=message.author.display_avatar)
         embed.timestamp = discord.utils.utcnow()
@@ -146,7 +146,7 @@ class Logger(commands.Cog):
             embed = discord.Embed(
                 title="Join Voice",
                 description=f"{member} has joined {after.channel.mention}",
-                colour=discord.Colour.green(),
+                color=discord.Color.green(),
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
@@ -155,7 +155,7 @@ class Logger(commands.Cog):
             embed = discord.Embed(
                 title="Leave Voice",
                 description=f"{member} has left {before.channel.mention}",
-                colour=discord.Colour.red(),
+                color=discord.Color.red(),
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
@@ -164,7 +164,7 @@ class Logger(commands.Cog):
             embed = discord.Embed(
                 title="Mute",
                 description=f"{member} has {'unmuted' if after.mute else 'muted'} {after.channel.mention}",
-                colour=discord.Colour.blue(),
+                color=discord.Color.blue(),
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
@@ -173,7 +173,7 @@ class Logger(commands.Cog):
             embed = discord.Embed(
                 title="Deaf",
                 description=f"{member} has {'undeafed' if after.deaf else 'deafed'} {after.channel.mention}",
-                colour=discord.Colour.blue(),
+                color=discord.Color.blue(),
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
@@ -182,7 +182,7 @@ class Logger(commands.Cog):
             embed = discord.Embed(
                 title="Move Voice",
                 description=f"{member} has moved from {before.channel.mention} to {after.channel.mention}",
-                colour=discord.Colour.blue(),
+                color=discord.Color.blue(),
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
@@ -190,7 +190,7 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User) -> None:
-        embed = discord.Embed(title="Update User", colour=discord.Colour.blue())
+        embed = discord.Embed(title="Update User", color=discord.Color.blue())
         embed.set_thumbnail(url=after.display_avatar)
         embed.timestamp = discord.utils.utcnow()
         if before.display_name != after.display_name:
@@ -218,7 +218,7 @@ class Logger(commands.Cog):
     async def on_member_update(
         self, before: discord.Member, after: discord.Member
     ) -> None:
-        embed = discord.Embed(title="Update Member", colour=discord.Colour.blue())
+        embed = discord.Embed(title="Update Member", color=discord.Color.blue())
         embed.set_thumbnail(url=after.display_avatar)
         embed.timestamp = discord.utils.utcnow()
         if before.nick != after.nick:
@@ -251,7 +251,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Ban",
             description=f"{user} has been banned from {guild.name}",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=user.display_avatar)
         embed.timestamp = discord.utils.utcnow()
@@ -262,7 +262,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Unban",
             description=f"{user} has been unbanned from {guild.name}",
-            colour=discord.Colour.green(),
+            color=discord.Color.green(),
         )
         embed.set_thumbnail(url=user.display_avatar)
         embed.timestamp = discord.utils.utcnow()
@@ -272,7 +272,7 @@ class Logger(commands.Cog):
     async def on_guild_update(
         self, before: discord.Guild, after: discord.Guild
     ) -> None:
-        embed = discord.Embed(title="Update Guild", colour=discord.Colour.blue())
+        embed = discord.Embed(title="Update Guild", color=discord.Color.blue())
         embed.set_thumbnail(url=after.icon)
         embed.timestamp = discord.utils.utcnow()
         if before.description != after.description:
@@ -307,7 +307,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Create Channel",
             description=f"{channel.mention} has been created.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=channel.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -318,7 +318,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Delete Channel",
             description=f"{channel.mention} has been deleted.",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=channel.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -328,7 +328,7 @@ class Logger(commands.Cog):
     async def on_guild_channel_update(
         self, before: discord.TextChannel, after: discord.TextChannel
     ) -> None:
-        embed = discord.Embed(title="Update Channel", colour=discord.Colour.blue())
+        embed = discord.Embed(title="Update Channel", color=discord.Color.blue())
         embed.set_thumbnail(url=after.guild.icon)
         embed.timestamp = discord.utils.utcnow()
         if before.name != after.name:
@@ -361,7 +361,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Update Channel",
             description=f"{channel.mention} has updated their pins.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=channel.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -378,7 +378,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Update Emojis",
             description=f"{guild.name} has updated their emojis.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -396,7 +396,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Update Stickers",
             description=f"{guild.name} has updated their stickers.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -413,7 +413,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Update Integrations",
             description=f"{guild.name} has updated their integrations.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -424,7 +424,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Create Integration",
             description=f"{integration.name} has been created.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=integration.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -435,7 +435,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Delete Integration",
             description=f"{integration.name} has been deleted.",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=integration.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -446,7 +446,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Create Role",
             description=f"{role.mention} has been created.",
-            colour=discord.Colour.blue(),
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=role.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -457,7 +457,7 @@ class Logger(commands.Cog):
         embed = discord.Embed(
             title="Delete Role",
             description=f"{role.mention} has been deleted.",
-            colour=discord.Colour.red(),
+            color=discord.Color.red(),
         )
         embed.set_thumbnail(url=role.guild.icon)
         embed.timestamp = discord.utils.utcnow()
@@ -467,7 +467,7 @@ class Logger(commands.Cog):
     async def on_guild_role_update(
         self, before: discord.Role, after: discord.Role
     ) -> None:
-        embed = discord.Embed(title="Update Role", colour=discord.Colour.blue())
+        embed = discord.Embed(title="Update Role", color=discord.Color.blue())
         embed.set_thumbnail(url=after.guild.icon)
         embed.timestamp = discord.utils.utcnow()
         if before.name != after.name:
@@ -498,30 +498,9 @@ class Logger(commands.Cog):
         else:
             pass
 
-    @commands.Cog.listener()
-    async def on_presence_update(
-        self, before: discord.Member, after: discord.Member
-    ) -> None:
-        if after.bot:
-            return
-        embed = discord.Embed(
-            title="Update Presence",
-            description=f"{after.mention} has updated their presence.",
-            colour=discord.Colour.blue(),
-        )
-        embed.set_thumbnail(url=after.guild.icon)
-        embed.timestamp = discord.utils.utcnow()
-        if before.status != after.status:
-            embed.add_field(name="Before", value=before.status.name)  # type: ignore
-            embed.add_field(name="After", value=after.status.name)  # type: ignore
-            await self.bot.logs.send(embed=embed)
-        elif before.activity != after.activity:
-            embed.add_field(name="Before", value=before.activity.name)
-            embed.add_field(name="After", value=after.activity.name)
-            await self.bot.logs.send(embed=embed)
-        else:
-            pass
-
+    async def cog_load(self):
+        print(f"✅ Cog {self.qualified_name} was successfully loaded!")
+        
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Logger(bot))

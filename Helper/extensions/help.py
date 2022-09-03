@@ -56,7 +56,7 @@ class Formatter:
         embed = discord.Embed(
             title=signature[0],
             description=signature[1] + self.__format_command_help(command),
-            color=0x2F3136,
+            color=discord.Color.blue(),
         )
         embed.add_field(
             name="Aliases", value=self.__format_command_aliases(command), inline=True
@@ -79,7 +79,7 @@ class Formatter:
     ) -> list[discord.Embed]:
         embeds = []
         for num, (name, allcommand) in enumerate(pages.items()):
-            embed = discord.Embed(title=name, description=desc[num], color=0x2F3136)
+            embed = discord.Embed(title=f"{name} Commands", description=desc[num], color=discord.Color.blue())
             for command in allcommand:
                 signature = self.__format_command_signature(command)
                 embed.add_field(
@@ -100,7 +100,8 @@ class MyHelp(commands.MinimalHelpCommand):
     async def send_bot_help(self, mapping):
         category = {}
         for k, v in self.context.bot.cogs.items():
-            if len((x := v.get_commands())) > 0:
+            commands_list = await self.filter_commands(v.get_commands())
+            if len((x := commands_list)) > 0:
                 if len(x) == 1:
                     if isinstance(x[0], commands.Group):
                         category[k] = [x[0]] + list(x[0].commands)
@@ -117,7 +118,8 @@ class MyHelp(commands.MinimalHelpCommand):
         )
 
     async def send_cog_help(self, cog: commands.Cog):
-        if len(subcommands := cog.get_commands()) == 0:
+        commands_list = await self.filter_commands(cog.get_commands())
+        if len(subcommands := commands_list) == 0:
             return await self.send_empty_cog_help(cog)
         category = {cog.qualified_name: subcommands}
         categorydesc = (
@@ -142,7 +144,7 @@ class MyHelp(commands.MinimalHelpCommand):
 
     async def send_empty_cog_help(self, cog):
         embed = discord.Embed(
-            color=0x2F3136,
+            color=discord.Color.blue(),
             title=f"{cog.qualified_name.title()} Category",
         )
         embed.description = "*No such category found...*"

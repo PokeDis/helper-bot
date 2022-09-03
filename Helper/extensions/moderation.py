@@ -3,7 +3,6 @@ from typing import Optional, Union
 
 import discord
 import humanfriendly
-from discord import app_commands
 from discord.ext import commands, tasks
 
 from ..main import HelperBot
@@ -12,17 +11,14 @@ from ..utils import DurationCoverter
 
 class Moderation(
     commands.Cog,
-    description="Used to manage server and belt sinners.\n`<input>` are mandatory and `[input]` are optional.",
+    description="Used to manage server and punish misdeeds.\n`<input>` are mandatory and `[input]` are optional.",
 ):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
-        self.clean_warns.start()
 
-    @commands.hybrid_command(
-        brief="Mute a member so they cannot type",
-        help="Mute a member so they cannot type.",
+    @commands.command(
+        help="Mute a member so they cannot type",
     )
-    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def mute(
@@ -38,9 +34,8 @@ class Moderation(
             if time:
                 if time.total_seconds() <= 2160000:
                     embed1 = discord.Embed(
-                        title="<a:_:1000859478217994410>  Success",
-                        description=f"Muted {member} for `{humanfriendly.format_timespan(time.total_seconds())}`.\n**Reason:**\n> {reason}",
-                        color=0x2F3136,
+                        description=f"<:tick:1001136782508826777> Muted {member} for `{humanfriendly.format_timespan(time.total_seconds())}`.\n**Reason:** {reason}",
+                        color=discord.Color.green(),
                     )
                     embed1.timestamp = discord.utils.utcnow()
                     await member.timeout(
@@ -50,17 +45,15 @@ class Moderation(
                     await ctx.send(embed=embed1)
                 else:
                     embed2 = discord.Embed(
-                        title="<a:_:1000851617182142535>  Nah Buddy...",
-                        description="> Maximum mute duration is `25 days`.\n> If you want to get rid of them so bad, try using the ban command ¯\\_(ツ)_/¯",
-                        color=0x2F3136,
+                        description="<:no:1001136828738453514> Maximum mute duration is `25 days`.",
+                        color=discord.Color.red(),
                     )
                     await ctx.send(embed=embed2)
             else:
                 unmute_time = discord.utils.utcnow() + timedelta(seconds=2160000)
                 embed3 = discord.Embed(
-                    title="<a:_:1000859478217994410>  Success",
-                    description=f"Muted {member} for `25d`.\n**Reason:**\n> {reason}",
-                    color=0x2F3136,
+                    description=f"<:tick:1001136782508826777> Muted {member} for `25d`.\n**Reason:** {reason}",
+                    color=discord.Color.green(),
                 )
                 embed3.timestamp = discord.utils.utcnow()
                 await member.timeout(
@@ -70,22 +63,19 @@ class Moderation(
                 await ctx.send(embed=embed3)
         else:
             embed4 = discord.Embed(
-                title="<a:_:1000851617182142535>  Nah Buddy...",
-                description="> You can't mute this user.\n> If you want to get rid of them so bad, try using the ban command ¯\\_(ツ)_/¯",
-                color=0x2F3136,
+                description="<:no:1001136828738453514> You can't mute this user.",
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed4)
 
-    @commands.hybrid_command(brief="Unmute a member", help="Unmute a member.")
-    @app_commands.default_permissions(manage_messages=True)
+    @commands.command(help="Unmute a member")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def unmute(self, ctx: commands.Context, member: discord.Member) -> None:
         if member.is_timed_out():
             embed = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"> Unmuted {member}.",
-                color=0x2F3136,
+                description=f"<:tick:1001136782508826777> Unmuted {member}.",
+                color=discord.Color.green(),
             )
             embed.timestamp = discord.utils.utcnow()
             await member.timeout(None)
@@ -93,15 +83,12 @@ class Moderation(
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"> {member} is not muted.",
-                color=0x2F3136,
+                description=f"<:no:1001136828738453514> {member} is not muted.",
+                color=discord.Color.red(),
             )
-            embed.timestamp = discord.utils.utcnow()
             await ctx.send(embed=embed)
 
-    @commands.hybrid_command(brief="Kick a member", help="Kick a member.")
-    @app_commands.default_permissions(kick_members=True)
+    @commands.command(help="Kick a member")
     @commands.has_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(
@@ -112,9 +99,8 @@ class Moderation(
         reason: Optional[str] = None,
     ) -> None:
         embed1 = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"Kicked {member}.\n**Reason:**\n> {reason}",
-            color=0x2F3136,
+            description=f"<:tick:1001136782508826777> Kicked {member}.\n**Reason:** {reason}",
+            color=discord.Color.green(),
         )
         embed1.timestamp = discord.utils.utcnow()
         if (ctx.author.top_role > member.top_role) or (member != ctx.guild.owner):
@@ -122,14 +108,12 @@ class Moderation(
             await ctx.send(embed=embed1)
         else:
             embed2 = discord.Embed(
-                title="<a:_:1000851617182142535>  Nah Buddy...",
-                description="> You can't kick this user.",
-                color=0x2F3136,
+                description="<:no:1001136828738453514> You can't kick this user.",
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed2)
 
-    @commands.hybrid_command(brief="Ban a member", help="Ban a member.")
-    @app_commands.default_permissions(ban_members=True)
+    @commands.command(help="Ban a member")
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(
@@ -144,23 +128,20 @@ class Moderation(
             and (ctx.author.top_role > member.top_role or member != ctx.guild.owner)
         ):
             embed = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"Banned {member}.\n**Reason:**\n> {reason}",
-                colour=0x2F3136,
+                description=f"<:tick:1001136782508826777> Banned {member}.\n**Reason:** {reason}",
+                color=discord.Color.green(),
             )
             embed.timestamp = discord.utils.utcnow()
             await ctx.guild.ban(member, reason=f"{reason if reason else ctx.author.id}")
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
-                title="<a:_:1000851617182142535>  Nah Buddy...",
-                description="> You can't ban this user.",
-                colour=0x2F3136,
+                description="<:no:1001136828738453514> You can't ban this user.",
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed)
 
-    @commands.hybrid_command(brief="Unban a member", help="Unban a member.")
-    @app_commands.default_permissions(ban_members=True)
+    @commands.command(help="Unban a member")
     @commands.has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(
@@ -171,19 +152,16 @@ class Moderation(
         reason: Optional[str] = None,
     ) -> None:
         embed1 = discord.Embed(
-            title="<a:_:1000859478217994410>  Success",
-            description=f"Unbanned {member}.\n**Reason:**\n> {reason}",
-            color=0x2F3136,
+            description=f"<:tick:1001136782508826777> Unbanned {member}.\n**Reason:** {reason}",
+            color=discord.Color.green(),
         )
         embed1.timestamp = discord.utils.utcnow()
         await ctx.guild.unban(member, reason=f"{reason if reason else ctx.author.id}")
         await ctx.send(embed=embed1)
 
-    @commands.hybrid_command(
-        brief="Enable or disable slowmode on a channel",
-        help="Enable or disable slowmode on a channel.",
+    @commands.command(
+        help="Enable or disable slowmode on a channel",
     )
-    @app_commands.default_permissions(manage_channels=True)
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def slowmode(
@@ -197,9 +175,8 @@ class Moderation(
         if time:
             if time.total_seconds() <= 21600:
                 embed1 = discord.Embed(
-                    title="<a:_:1000859478217994410>  Success",
-                    description=f"Slowmode of `{humanfriendly.format_timespan(time.total_seconds())}` has been started in <#{ctx.channel.mention}>.\n**Reason:**\n> {reason}",
-                    color=0x2F3136,
+                    description=f"<:tick:1001136782508826777> Slowmode of `{humanfriendly.format_timespan(time.total_seconds())}` has been started in {ctx.channel.mention}.\n**Reason:** {reason}",
+                    color=discord.Color.green(),
                 )
                 embed1.timestamp = discord.utils.utcnow()
                 await ctx.channel.edit(
@@ -210,16 +187,14 @@ class Moderation(
                 await ctx.send(embed=embed1)
             else:
                 embed2 = discord.Embed(
-                    title="<a:_:1000851617182142535>  Nah Buddy...",
-                    description="> Maximum slowmode duration is `6 hours`.\n> If you want people rattling on, try using the mute command ¯\\_(ツ)_/¯",
-                    color=0x2F3136,
+                    description="<:no:1001136828738453514> Maximum slowmode duration is `6 hours`.",
+                    color=discord.Color.red(),
                 )
                 await ctx.send(embed=embed2)
         else:
             embed3 = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"Slowmode has been terminated in {ctx.channel.mention}.\n**Reason:**\n> {reason}",
-                color=0x2F3136,
+                description=f"<:tick:1001136782508826777> Slowmode has been terminated in {ctx.channel.mention}.\n**Reason:** {reason}",
+                color=discord.Color.green(),
             )
             embed3.timestamp = discord.utils.utcnow()
             await ctx.channel.edit(
@@ -227,10 +202,8 @@ class Moderation(
             )
             await self.bot.logs.send(embed=embed3)
             await ctx.send(embed=embed3)
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BETA TEST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    @commands.hybrid_command(brief="Warn a member", help="Warn a member.")
-    @app_commands.default_permissions(manage_messages=True)
+            
+    @commands.command(help="Warn a member")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def warn(
@@ -242,11 +215,10 @@ class Moderation(
     ) -> None:
         if (
             member == ctx.author or member == ctx.guild.owner or member == self.bot.user
-        ) or (ctx.author.top_role < member.top_role):
+        ) or (ctx.author.top_role <= member.top_role):
             embed = discord.Embed(
-                title="<a:_:1000851617182142535>  Nah Buddy...",
-                description="> You can't warn this user.",
-                color=0x2F3136,
+                description="<:no:1001136828738453514> You can't warn this user.",
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed)
         else:
@@ -254,9 +226,8 @@ class Moderation(
                 ctx.guild.id, member.id, reason, ctx.message.created_at.timestamp()
             )
             embed1 = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"{ctx.author.name} has warned {member.name}.\n**Reason:**\n> {reason}",
-                color=0x2F3136,
+                description=f"<:tick:1001136782508826777> {ctx.author.name} has warned {member.name}.\n**Reason:** {reason}",
+                color=discord.Color.green(),
             )
             embed1.timestamp = discord.utils.utcnow()
             await ctx.send(embed=embed1)
@@ -265,15 +236,13 @@ class Moderation(
             count = len(data[3])
             embed2 = discord.Embed(
                 title=f"Warned by {ctx.author.name} in {ctx.guild.name}",
-                color=0x2F3136,
+                description=
+                f"Total warn(s) -> [{count}]"
+                "\nWarns reset per 2 months. More than 3 warns per 2 months can have serious consequences.",
+                color=discord.Color.red(),
                 timestamp=discord.utils.utcnow(),
             )
-            embed2.add_field(name="Reason", value=reason, inline=False)
-            embed2.add_field(
-                name=f"Total warn(s) -> [{count}]",
-                value="Warns reset per 2 months. More than 3 warns per 2 months can have serious consequences.",
-                inline=False,
-            )
+            embed2.add_field(name="Reason", value=reason)
             embed2.set_thumbnail(url=ctx.author.display_avatar)
             try:
                 await self.bot.logs.send(embed=embed2)
@@ -281,10 +250,9 @@ class Moderation(
             except discord.HTTPException:
                 pass
 
-    @commands.hybrid_command(
-        brief="Get warnings for a member", help="Get warnings for a member."
+    @commands.command(
+        help="Get warnings for a member"
     )
-    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def warns(
@@ -293,15 +261,14 @@ class Moderation(
         data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
         if not data or not data[3]:
             embed3 = discord.Embed(
-                title=":mag:  Hmm...",
-                description=f"> It seems the member has a clean record.",
-                color=0x2F3136,
+                description=f"<:bullet:1014583675184230511> {member.mention} has a clean record.",
+                color=discord.Color.blue(),
             )
             return await ctx.send(embed=embed3)
         embed = discord.Embed(
             title=f"{member.name}'s Misdeeds",
             description=f"Total Warns: `{len(data[2])}`",
-            color=0x2F3136,
+            color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=member.display_avatar)
         for i in range(len(data[2])):
@@ -309,17 +276,15 @@ class Moderation(
             reason = data[2][i]
             embed.add_field(
                 name=f"On {discord.utils.format_dt(timestamp, style='D')}",
-                value=f"Reason: {reason}\nWarn ID: `{data[3][i]}`",
+                value=f"<:bullet:1014583675184230511> Reason: {reason}\n<:bullet:1014583675184230511> Warn ID: `{data[3][i]}`",
                 inline=False,
             )
         return await ctx.send(embed=embed)
 
-    @commands.hybrid_command(
-        brief="Clear a single warning from a member",
-        help="Clear a single warning from a member.",
+    @commands.command(
+        help="Clear a single warning from a member",
         aliases=["dw", "rw", "removewarn"],
     )
-    @app_commands.default_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def deletewarn(
@@ -328,17 +293,15 @@ class Moderation(
         data = await self.bot.db.warn_db.warn_log(ctx.guild.id, member.id)
         if not data:
             embed3 = discord.Embed(
-                title=":mag:  Hmm...",
-                description=f"> It seems the member has a clean record.",
-                color=0x2F3136,
+                description=f"<:bullet:1014583675184230511> {member.mention} has a clean record.",
+                color=discord.Color.blue(),
             )
             return await ctx.send(embed=embed3)
         if data[3] and warn_id in data[3]:
             index = data[3].index(warn_id)
             embed1 = discord.Embed(
-                title="<a:_:1000859478217994410>  Success",
-                description=f"> Deleted warn entry.",
-                color=0x2F3136,
+                description=f"<:tick:1001136782508826777> Deleted warn entry.",
+                color=discord.Color.green(),
             )
             embed1.timestamp = discord.utils.utcnow()
             await self.bot.db.warn_db.remove_warn(ctx.guild.id, member.id, index)
@@ -346,9 +309,8 @@ class Moderation(
             return await ctx.send(embed=embed1)
         else:
             embed2 = discord.Embed(
-                title="<a:_:1000851617182142535>  Error!",
-                description="> No warn entry corresponding user found.",
-                color=0x2F3136,
+                description="<:no:1001136828738453514> No warn entry corresponding user found.",
+                color=discord.Color.red(),
             )
             return await ctx.send(embed=embed2)
 
@@ -371,6 +333,15 @@ class Moderation(
                         raw[2].remove(raw[2][index])
                         raw[3].remove(raw[3][index])
                         await self.bot.db.warn_db.update_warn(raw)
+
+    @clean_warns.before_loop
+    async def before_clear_warns(self):
+        await self.bot.wait_until_ready()
+        print("🔃 Started Clear Warns loop.")
+
+    async def cog_load(self):
+        print(f"✅ Cog {self.qualified_name} was successfully loaded!")
+        self.clean_warns.start()
 
 
 async def setup(bot: HelperBot) -> None:

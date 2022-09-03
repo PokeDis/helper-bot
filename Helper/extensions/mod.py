@@ -150,7 +150,7 @@ class Mod(commands.Cog):
         checker = self._spam_check[guild_id]
         if not checker.is_spamming(message):
             return
-        embed = discord.Embed(title=f"Auto-Ban {member}", colour=discord.Colour.red())
+        embed = discord.Embed(title=f"Auto-Ban {member}", color=discord.Color.red())
         embed.set_thumbnail(url=member.display_avatar)
         embed.timestamp = discord.utils.utcnow()
         try:
@@ -192,7 +192,7 @@ class Mod(commands.Cog):
         mention_count = sum(not m.bot and m.id != author.id for m in message.mentions)
         if mention_count < 5:
             return
-        embed = discord.Embed(title=f"Auto-Ban {author}", colour=discord.Colour.red())
+        embed = discord.Embed(title=f"Auto-Ban {author}", color=discord.Color.red())
         embed.set_thumbnail(url=author.display_avatar)
         embed.timestamp = discord.utils.utcnow()
 
@@ -220,13 +220,16 @@ class Mod(commands.Cog):
 
         if fastjoin:
             embed = discord.Embed(
-                title=f"High-Speed Join {member}", colour=discord.Colour.red()
+                title=f"High-Speed Join {member}", color=discord.Color.red()
             )
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
             embed.description = f"**High-speed join from {member} (ID: {member.id}) in server {member.guild} via strict mode.**"
             await self.bot.logs.send(embed=embed)
 
+    async def cog_load(self):
+        print(f"✅ Cog {self.qualified_name} was successfully loaded!")
+        
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Mod(bot))
