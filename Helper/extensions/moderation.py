@@ -202,7 +202,7 @@ class Moderation(
             )
             await self.bot.logs.send(embed=embed3)
             await ctx.send(embed=embed3)
-            
+
     @commands.command(help="Warn a member")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
@@ -236,8 +236,7 @@ class Moderation(
             count = len(data[3])
             embed2 = discord.Embed(
                 title=f"Warned by {ctx.author.name} in {ctx.guild.name}",
-                description=
-                f"Total warn(s) -> [{count}]"
+                description=f"Total warn(s) -> [{count}]"
                 "\nWarns reset per 2 months. More than 3 warns per 2 months can have serious consequences.",
                 color=discord.Color.red(),
                 timestamp=discord.utils.utcnow(),
@@ -250,9 +249,7 @@ class Moderation(
             except discord.HTTPException:
                 pass
 
-    @commands.command(
-        help="Get warnings for a member"
-    )
+    @commands.command(help="Get warnings for a member")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def warns(

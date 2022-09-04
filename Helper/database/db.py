@@ -299,12 +299,12 @@ class GiveawayDB(DatabaseModel):
 
     async def giveaway_click(self, message_id: int, user_id: int) -> bool:
         data = await self.get_giveaway(message_id)
+        check = False
         if user_id in data[1]:
             data[1].remove(user_id)
-            check = False
         else:
             data[1].append(user_id)
-            check = True
+            check = not check
         await self.exec_write_query(
             "UPDATE giveaway SET participants = $1 WHERE message_id = $2",
             (
@@ -338,10 +338,11 @@ class GiveawayDB(DatabaseModel):
     async def update_bool(self, message_id: int) -> None:
         await self.exec_write_query(
             "UPDATE giveaway SET end_check = TRUE WHERE message_id = $1",
-            (
-                message_id,
-            ),
+            (message_id,),
         )
+
+    async def drop_table(self) -> None:
+        await self.exec_write_query("DROP TABLE giveaway")
 
 
 class ReminderDB(DatabaseModel):

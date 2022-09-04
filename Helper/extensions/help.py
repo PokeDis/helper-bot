@@ -79,7 +79,11 @@ class Formatter:
     ) -> list[discord.Embed]:
         embeds = []
         for num, (name, allcommand) in enumerate(pages.items()):
-            embed = discord.Embed(title=f"{name} Commands", description=desc[num], color=discord.Color.blue())
+            embed = discord.Embed(
+                title=f"{name} Commands",
+                description=desc[num],
+                color=discord.Color.blue(),
+            )
             for command in allcommand:
                 signature = self.__format_command_signature(command)
                 embed.add_field(
@@ -104,7 +108,7 @@ class MyHelp(commands.MinimalHelpCommand):
             if len((x := commands_list)) > 0:
                 if len(x) == 1:
                     if isinstance(x[0], commands.Group):
-                        category[k] = [x[0]] + list(x[0].commands)
+                        category[k] = [x[0]] + list(x[0].commands)  # type: ignore
                 else:
                     category[k] = x
         categorydesc = [

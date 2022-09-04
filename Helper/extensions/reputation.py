@@ -90,9 +90,7 @@ class Reputation(
         )
         return await ctx.send(embed=embed)
 
-    @rep.command(
-        help="Remove certain amount of rep from a member"
-    )
+    @rep.command(help="Remove certain amount of rep from a member")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def take(

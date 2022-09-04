@@ -64,7 +64,10 @@ class Tag(
             )
             if matches:
                 sr_num = [f"{i}. {j}" for i, j in enumerate(matches, start=1)]
-                description = "<:no:1001136828738453514> No such tag found.\nDid you mean...\n" + "\n".join(sr_num)
+                description = (
+                    "<:no:1001136828738453514> No such tag found.\nDid you mean...\n"
+                    + "\n".join(sr_num)
+                )
                 embed = discord.Embed(
                     description=description,
                     color=discord.Color.red(),

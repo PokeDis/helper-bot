@@ -144,7 +144,8 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send(
                 embed=discord.Embed(
-                    description="<:no:1001136828738453514> This command is disabled", color=discord.Color.red()
+                    description="<:no:1001136828738453514> This command is disabled",
+                    color=discord.Color.red(),
                 )
             )
         elif isinstance(error, commands.PrivateMessageOnly):

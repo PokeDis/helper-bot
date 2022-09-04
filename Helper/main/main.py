@@ -22,6 +22,7 @@ class HelperBot(commands.Bot):
     db: Database
     logs: discord.TextChannel
     LOGCHANNEL: int = 998285318987989063
+    TOKEN: str = os.getenv("TOKEN")
 
     def __init__(self) -> None:
         intents = discord.Intents.default()
@@ -54,5 +55,5 @@ class HelperBot(commands.Bot):
     async def on_ready(self) -> None:
         print(f"{self.user} is ready!")
 
-    def run(self) -> None:
-        super().run(os.getenv("TOKEN"))
+    def begin(self) -> None:
+        self.run(self.TOKEN)

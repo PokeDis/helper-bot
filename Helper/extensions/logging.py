@@ -500,7 +500,7 @@ class Logger(commands.Cog):
 
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")
-        
+
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Logger(bot))

@@ -7,7 +7,10 @@ from discord.ext import commands
 from ..main import HelperBot
 
 
-class Management(commands.Cog, description="Server management and utility tools.\n`<input>` are mandatory and `[input]` are optional."):
+class Management(
+    commands.Cog,
+    description="Server management and utility tools.\n`<input>` are mandatory and `[input]` are optional.",
+):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
 
@@ -27,18 +30,23 @@ class Management(commands.Cog, description="Server management and utility tools.
     @commands.command(help="Change nickname of a member")
     @commands.has_permissions(manage_nicknames=True)
     @commands.guild_only()
-    async def nick(self, ctx: commands.Context, member: discord.Member, nick: Optional[str] = None) -> None:
+    async def nick(
+        self, ctx: commands.Context, member: discord.Member, nick: Optional[str] = None
+    ) -> None:
         nick = nick or member.name
-        if len(nick) <= 32 and (ctx.author.top_role >= member.top_role or member != ctx.guild.owner):
+        if len(nick) <= 32 and (
+            ctx.author.top_role >= member.top_role or member != ctx.guild.owner
+        ):
             embed1 = discord.Embed(
                 description=f"<:tick:1001136782508826777> Nickname changed for {member.mention}.",
-                color=discord.Color.green())
+                color=discord.Color.green(),
+            )
             await member.edit(nick=nick)
             await ctx.send(embed=embed1)
         else:
             embed2 = discord.Embed(
                 description="<:no:1001136828738453514> You can't change nickname of this user.",
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await ctx.send(embed=embed2)
 
@@ -62,7 +70,7 @@ class Management(commands.Cog, description="Server management and utility tools.
         await message.add_reaction("👎")
         feedback_embed = discord.Embed(
             description=f"<:tick:1001136782508826777> Your suggestion has been sent to {suggestion_channel.mention}.",
-            color=discord.Color.green()
+            color=discord.Color.green(),
         )
         feedback_embed.set_footer(
             text="The staff team will review your suggestion as soon as possible."
@@ -81,7 +89,7 @@ class Management(commands.Cog, description="Server management and utility tools.
                 await channel.set_permissions(role, send_messages=False)
         embed = discord.Embed(
             description=f"<:tick:1001136782508826777> Locked {channel.mention}.",
-            color=discord.Color.green()
+            color=discord.Color.green(),
         )
         await ctx.send(embed=embed)
 
@@ -97,7 +105,7 @@ class Management(commands.Cog, description="Server management and utility tools.
                 await channel.set_permissions(role, send_messages=True)
         embed = discord.Embed(
             description=f"<:tick:1001136782508826777> Unlocked {channel.mention}.",
-            color=discord.Color.green()
+            color=discord.Color.green(),
         )
         await ctx.send(embed=embed)
 
@@ -108,13 +116,13 @@ class Management(commands.Cog, description="Server management and utility tools.
         if len(options) <= 1:
             a_embed = discord.Embed(
                 description="<:no:1001136828738453514> You need more than one option to make a poll!",
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             return await ctx.send(embed=a_embed)
         elif len(options) > 10:
             b_embed = discord.Embed(
                 description="<:no:1001136828738453514> You cannot make a poll for more than ten options!",
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             return await ctx.send(embed=b_embed)
         else:
@@ -132,7 +140,9 @@ class Management(commands.Cog, description="Server management and utility tools.
             ]
             description = [f"{reactions[i]} {j}" for i, j in enumerate(options)]
             poll_embed = discord.Embed(
-                title=f"{question}", description="\n".join(description), color=discord.Color.blue()
+                title=f"{question}",
+                description="\n".join(description),
+                color=discord.Color.blue(),
             )
             poll_embed.set_footer(text=f"Poll by {str(ctx.author)}")
             poll_embed.timestamp = discord.utils.utcnow()
@@ -142,12 +152,12 @@ class Management(commands.Cog, description="Server management and utility tools.
 
     @commands.command()
     @commands.is_owner()
-    async def drop(self, ctx: commands.Context):
-        await self.bot.db.giveaway_db.exec_write_query("DROP TABLE giveaway")
+    async def drop(self, _ctx: commands.Context):
+        await self.bot.db.giveaway_db.drop_table()
 
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")
-        
+
 
 async def setup(bot: HelperBot) -> None:
     await bot.add_cog(Management(bot))
