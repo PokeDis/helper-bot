@@ -39,7 +39,6 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             return
         elif isinstance(error, commands.MissingRequiredArgument):
             desc = f"{ctx.prefix}{ctx.command.name} {ctx.command.signature}"
-            print(error.param.name)
             inside = self.underline(
                 desc, desc.index(f"{error.param.name}"), len(f"{error.param.name}")
             )
@@ -177,7 +176,6 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             await channel.send(
                 f"```yaml\n{''.join(traceback.format_exception(error, error, error.__traceback__))}\n```"
             )
-            print(error)
             raise error
 
 
