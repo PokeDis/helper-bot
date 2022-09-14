@@ -40,7 +40,7 @@ class Tag(
     ) -> None:
         name = name or "All tags"
         sr_num = [f"{i}. {j}" for i, j in enumerate(matches, start=1)]
-        chunks = list(discord.utils.as_chunks(sr_num, 5))
+        chunks = list(discord.utils.as_chunks(sr_num, 10))
         embeds = []
         for i, j in enumerate(chunks):
             embed = discord.Embed(description="\n".join(j), color=discord.Color.blue())
@@ -52,7 +52,7 @@ class Tag(
             embeds.append(embed)
         await Support().paginate(embeds, ctx)
 
-    @commands.group(help="Tag to display")
+    @commands.group(help="Tag to display", invoke_without_command=True,)
     @commands.guild_only()
     async def tag(self, ctx: commands.Context, *, name: str) -> None:
         if not (tag_data := await self.bot.db.tag_db.get_tag(name)):

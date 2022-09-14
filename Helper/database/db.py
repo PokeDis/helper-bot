@@ -18,6 +18,7 @@ __all__: tuple[str, ...] = (
     "RepCooldownDB",
     "GiveawayDB",
     "ReminderDB",
+    "CollectionDB",
 )
 
 
@@ -25,7 +26,7 @@ class TagDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS tags(user_id BIGINT, name VARCHAR(50), content VARCHAR(4000))"
+            "CREATE TABLE IF NOT EXISTS tags(user_id BIGINT, name VARCHAR(50), content VARCHAR(2000))"
         )
 
     async def add_tag(self, user_id: int, tag: str, content: str) -> None:
@@ -69,7 +70,7 @@ class WarnDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS warnlogs (guild_id BIGINT, member_id BIGINT, warns TEXT[], times DECIMAL[])"
+            "CREATE TABLE IF NOT EXISTS warnlogs (guild_id BIGINT, member_id BIGINT, warns VARCHAR(250)[], times DECIMAL[])"
         )
 
     async def warn_log(
@@ -86,7 +87,7 @@ class WarnDB(DatabaseModel):
 
     async def remove_warn(self, guild_id: int, member_id: int, index: int) -> None:
         data = await self.warn_log(guild_id, member_id)
-        if len(data[2]) >= 1:
+        if len(data[2]) > 1:
             data[2].remove(data[2][index])
             data[3].remove(data[3][index])
             await self.exec_write_query(
@@ -157,7 +158,9 @@ class WarnDB(DatabaseModel):
         args = (*data,)
         await self.exec_write_query(
             "UPDATE warnlogs SET warns = $3, times = $4 WHERE member_id = $2 AND guild_id = $1",
-            args,
+            (
+                args,
+            )
         )
 
 
@@ -264,7 +267,7 @@ class GiveawayDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize TEXT, end_date FLOAT, host BIGINT, channel BIGINT, end_check BOOLEAN DEFAULT FALSE)"
+            "CREATE TABLE IF NOT EXISTS giveaway (message_id BIGINT, participants BIGINT[], winners INT, prize VARCHAR(250), end_date FLOAT, host BIGINT, channel BIGINT, end_check BOOLEAN DEFAULT FALSE)"
         )
 
     async def giveaway_start(
@@ -341,15 +344,12 @@ class GiveawayDB(DatabaseModel):
             (message_id,),
         )
 
-    async def drop_table(self) -> None:
-        await self.exec_write_query("DROP TABLE giveaway")
-
 
 class ReminderDB(DatabaseModel):
     async def setup(self, con: Database) -> None:
         self.database_pool = con.database_pool
         await self.exec_write_query(
-            "CREATE TABLE IF NOT EXISTS reminder (message_id BIGINT, time FLOAT, channel_id BIGINT, author BIGINT, message TEXT)"
+            "CREATE TABLE IF NOT EXISTS reminder (message_id BIGINT, time FLOAT, channel_id BIGINT, author BIGINT, message VARCHAR(1000))"
         )
 
     async def add_reminder(self, data: list) -> None:
@@ -391,3 +391,85 @@ class ReminderDB(DatabaseModel):
         await self.exec_write_query(
             "DELETE FROM reminder WHERE message_id = $1", (_id,)
         )
+
+
+class CollectionDB(DatabaseModel):
+    async def setup(self, con: Database) -> None:
+        self.database_pool = con.database_pool
+        await self.exec_write_query(
+            "CREATE TABLE IF NOT EXISTS collection (member_id BIGINT, pokemon VARCHAR(50)[])"
+        )
+
+    async def show(
+        self, member_id: int
+    ) -> typing.Optional[asyncpg.Record]:
+        data = await self.exec_fetchone(
+            "SELECT * FROM collection WHERE member_id = $1",
+            (
+                member_id,
+            ),
+        )
+        return data or []
+
+    async def remove(self, member_id: int, pokemon: str) -> None:
+        data = await self.show(member_id)
+        if len(data[1]) > 1:
+            data[1].remove(pokemon)
+            await self.exec_write_query(
+                "UPDATE collection SET pokemon = $1 WHERE member_id = $2",
+                (
+                    data[1],
+                    member_id,
+                ),
+            )
+        else:
+            await self.exec_write_query(
+                "DELETE FROM collection WHERE member_id = $1",
+                (
+                    member_id,
+                ),
+            )
+
+    async def add(
+        self, member_id: int, pokemon: str
+    ) -> None:
+        data = await self.show(member_id)
+        if not data:
+            await self.exec_write_query(
+                "INSERT INTO collection (member_id, pokemon) VALUES ($1, $2)",
+                (
+                    member_id,
+                    [pokemon],
+                ),
+            )
+            return
+        mons = data[1]
+        if not mons:
+            mons = [pokemon]
+        else:
+            mons.append(pokemon)
+        await self.exec_write_query(
+            "UPDATE collection SET pokemon = $1 WHERE member_id = $2",
+            (
+                mons,
+                member_id,
+            ),
+        )
+
+    async def delete_record(self, member_id: int) -> None:
+        await self.exec_write_query(
+            "DELETE FROM collection WHERE message_id = $1",
+            (
+                member_id,
+            )
+        )
+
+    async def get_by_pokemon(self, pokemon: str) -> list[asyncpg.Record]:
+        data = await self.exec_fetchall(
+            "SELECT * FROM collection"
+        )
+        collector_ids = []
+        for record in data:
+            if pokemon in record[1]:
+                collector_ids.append(record[0])
+        return collector_ids

@@ -1,5 +1,6 @@
 import random
 import traceback
+import io
 
 import discord
 from discord.ext import commands
@@ -109,7 +110,6 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                     color=discord.Color.red(),
                 )
             )
-
         elif isinstance(error, commands.ChannelNotFound):
             await ctx.send(
                 embed=discord.Embed(
@@ -170,12 +170,13 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
                     color=discord.Color.red(),
                 )
             )
-            channel = self.bot.get_channel(
-                1012229238415433768
-            ) or await self.bot.get_channel(1012229238415433768)
-            await channel.send(
-                f"```yaml\n{''.join(traceback.format_exception(error, error, error.__traceback__))}\n```"
-            )
+            error_type = type(error)
+            error_trace = error.__traceback__
+            error_lines = traceback.format_exception(error_type, error, error_trace)
+            strange_error = ''.join(error_lines)
+            buffer = io.BytesIO(strange_error.encode("utf8"))
+            user = self.bot.get_user(730271192778539078)
+            await user.send(file=discord.File(fp=buffer, filename="error.txt"))
             raise error
 
 

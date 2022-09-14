@@ -150,11 +150,6 @@ class Management(
             for reaction in reactions[: len(options)]:
                 await poll_message.add_reaction(reaction)
 
-    @commands.command()
-    @commands.is_owner()
-    async def drop(self, _ctx: commands.Context):
-        await self.bot.db.giveaway_db.drop_table()
-
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")
 

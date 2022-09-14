@@ -21,6 +21,7 @@ class Database:
         self.rep_cd_db = RepCooldownDB()
         self.giveaway_db = GiveawayDB()
         self.reminder_db = ReminderDB()
+        self.collection_db = CollectionDB()
 
     async def setup(self) -> None:
         self.database_pool = await asyncpg.create_pool(
@@ -38,3 +39,4 @@ class Database:
         await self.rep_cd_db.setup(self)
         await self.giveaway_db.setup(self)
         await self.reminder_db.setup(self)
+        await self.collection_db.setup(self)
