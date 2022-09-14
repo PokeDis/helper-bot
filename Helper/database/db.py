@@ -145,15 +145,6 @@ class WarnDB(DatabaseModel):
         data = await self.exec_fetchall("SELECT * FROM warnlogs")
         return data
 
-    async def remove_record(self, guild_id: int, member_id: int) -> None:
-        await self.exec_write_query(
-            "DELETE FROM warnlogs WHERE guild_id = $1 AND member_id = $2",
-            (
-                guild_id,
-                member_id,
-            ),
-        )
-
     async def update_warn(self, data: list) -> None:
         args = (*data,)
         await self.exec_write_query(

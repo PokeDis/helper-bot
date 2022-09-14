@@ -315,9 +315,6 @@ class Moderation(
     async def clean_warns(self) -> None:
         data = await self.bot.db.warn_db.get_all()
         for raw in data:
-            if not raw[3]:
-                await self.bot.db.warn_db.remove_record(raw[0], raw[1])
-                continue
             for time in raw[3]:
                 diff = datetime.now() - datetime.fromtimestamp(float(time))
                 clear_after = 5260000 - round(diff.total_seconds())
