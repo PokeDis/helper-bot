@@ -7,7 +7,7 @@ import humanfriendly
 from discord.ext import commands, tasks
 
 from ..main import HelperBot
-from ..utils import DurationCoverter
+from ..utils import DurationCoverter, Support
 
 
 class Reminder(
@@ -71,27 +71,30 @@ class Reminder(
     @commands.guild_only()
     async def _all(self, ctx: commands.Context) -> typing.Optional[discord.Message]:
         data = await self.bot.db.reminder_db.get_by_user(ctx.author.id)
-        embed = discord.Embed(
-            title=f"{ctx.author.name}'s Reminders",
-            description=f"Total Reminders: `{len(data)}`",
-            color=discord.Color.blue(),
-        )
-        embed.set_thumbnail(url=ctx.author.display_avatar)
-        for record in data:
-            reminder_id = record[0]
-            remind_after = discord.utils.format_dt(
-                datetime.datetime.fromtimestamp(record[1]), style="R"
+        if not len(data):
+            return await ctx.send("You have no reminders.")
+        embeds = []
+        for i in range(0, len(data), 5):
+            embed = discord.Embed(
+                title=f"{ctx.author.name}'s Reminders",
+                description=f"Total Reminders: `{len(data)}`",
+                color=discord.Color.blue(),
             )
-            channel = self.bot.get_channel(record[2]) or await self.bot.fetch_channel(
-                record[2]
-            )
-            message = record[4] if len(record[4]) <= 20 else record[4][0:17] + "..."
-            embed.add_field(
-                name=f"Reminder ID: {reminder_id}",
-                value=f"<:bullet:1014583675184230511> Remind at: {remind_after}\n<:bullet:1014583675184230511> Message: {message}\n<:bullet:1014583675184230511> In: {channel.mention}",
-                inline=False,
-            )
-        return await ctx.send(embed=embed)
+            embed.set_thumbnail(url=ctx.author.display_avatar)
+            for reminder in data[i : i + 5]:
+                message = (
+                    reminder[4] if len(reminder[4]) <= 20 else reminder[4][0:17] + "..."
+                )
+                remind = discord.utils.format_dt(
+                    datetime.datetime.fromtimestamp(reminder[1]), style="R"
+                )
+                embed.add_field(
+                    name=f"Reminder ID: `{reminder[0]}`",
+                    value=f"<:bullet:1014583675184230511>Remind At: `{remind}`\nMessage: `{message}`\nChannel: <#{reminder[2]}>",
+                    inline=False,
+                )
+            embeds.append(embed)
+        return await Support().paginate(embeds, ctx)
 
     @tasks.loop(seconds=10)
     async def check_reminders(self) -> None:

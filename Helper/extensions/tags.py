@@ -52,7 +52,10 @@ class Tag(
             embeds.append(embed)
         await Support().paginate(embeds, ctx)
 
-    @commands.group(help="Tag to display", invoke_without_command=True,)
+    @commands.group(
+        help="Tag to display",
+        invoke_without_command=True,
+    )
     @commands.guild_only()
     async def tag(self, ctx: commands.Context, *, name: str) -> None:
         if not (tag_data := await self.bot.db.tag_db.get_tag(name)):

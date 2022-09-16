@@ -1,6 +1,6 @@
+import io
 import random
 import traceback
-import io
 
 import discord
 from discord.ext import commands
@@ -173,7 +173,7 @@ class ErrorHandler(commands.Cog, description="Handles errors for the bot."):
             error_type = type(error)
             error_trace = error.__traceback__
             error_lines = traceback.format_exception(error_type, error, error_trace)
-            strange_error = ''.join(error_lines)
+            strange_error = "".join(error_lines)
             buffer = io.BytesIO(strange_error.encode("utf8"))
             user = self.bot.get_user(730271192778539078)
             await user.send(file=discord.File(fp=buffer, filename="error.txt"))

@@ -227,6 +227,116 @@ class Mod(commands.Cog):
             embed.description = f"**High-speed join from {member} (ID: {member.id}) in server {member.guild} via strict mode.**"
             await self.bot.logs.send(embed=embed)
 
+    @staticmethod
+    async def start_lockdown(
+        ctx: commands.Context,
+        channels: list[discord.TextChannel | discord.VoiceChannel],
+    ) -> tuple[
+        list[discord.TextChannel | discord.VoiceChannel],
+        list[discord.TextChannel | discord.VoiceChannel],
+    ]:
+        success, failures = [], []
+        reason = f"Lockdown request by {ctx.author} (ID: {ctx.author.id})"
+        async with ctx.typing():
+            for channel in channels:
+                for role in ctx.guild.roles:
+                    if (
+                        not role.permissions.administrator
+                        and not role.permissions.is_bot_managed()
+                    ):
+                        try:
+                            await channel.set_permissions(
+                                role,
+                                send_messages=False,
+                                reason=reason,
+                                connect=False,
+                                use_application_commands=False,
+                                add_reactions=False,
+                                create_private_threads=False,
+                                create_public_threads=False,
+                                send_messages_in_threads=False,
+                            )
+                        except discord.HTTPException:
+                            failures.append(channel)
+                        else:
+                            success.append(channel)
+        return success, failures
+
+    @staticmethod
+    async def end_lockdown(
+        ctx: commands.Context,
+        channels: list[discord.TextChannel | discord.VoiceChannel],
+    ) -> tuple[
+        list[discord.TextChannel | discord.VoiceChannel],
+        list[discord.TextChannel | discord.VoiceChannel],
+    ]:
+        success, failures = [], []
+        reason = f"Lockdown-Lift request by {ctx.author} (ID: {ctx.author.id})"
+        async with ctx.typing():
+            for channel in channels:
+                for role in ctx.guild.roles:
+                    if (
+                        not role.permissions.administrator
+                        and not role.permissions.is_bot_managed()
+                    ):
+                        try:
+                            await channel.set_permissions(
+                                role,
+                                send_messages=True,
+                                reason=reason,
+                                connect=True,
+                                use_application_commands=True,
+                                add_reactions=True,
+                                create_private_threads=True,
+                                create_public_threads=True,
+                                send_messages_in_threads=True,
+                            )
+                        except discord.HTTPException:
+                            failures.append(channel)
+                        else:
+                            success.append(channel)
+        return success, failures
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def lockdown(
+        self,
+        ctx: commands.Context,
+        *,
+        channels: commands.Greedy[discord.TextChannel | discord.VoiceChannel] = None,
+    ):
+        """Locks down the server or specified channels."""
+        if channels is None:
+            channels = ctx.guild.channels
+        success, failures = await self.start_lockdown(ctx, channels)
+        if failures:
+            await ctx.send(
+                f"Successfully locked down {len(success)} channels, failed to lock down {len(failures)} channels.\n"
+                f"Failed to lock down: {', '.join(f'{c.mention} ({c.id})' for c in failures)}"
+            )
+        else:
+            await ctx.send(f"Successfully locked down {len(success)} channels.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def lockdownlift(
+        self,
+        ctx: commands.Context,
+        *,
+        channels: commands.Greedy[discord.TextChannel | discord.VoiceChannel] = None,
+    ):
+        """Lifts lockdown on the server or specified channels."""
+        if channels is None:
+            channels = ctx.guild.channels
+        success, failures = await self.end_lockdown(ctx, channels)
+        if failures:
+            await ctx.send(
+                f"Successfully lifted lockdown on {len(success)} channels, failed to lift lockdown on {len(failures)} channels.\n"
+                f"Failed to lift lockdown on: {', '.join(f'{c.mention} ({c.id})' for c in failures)}"
+            )
+        else:
+            await ctx.send(f"Successfully lifted lockdown on {len(success)} channels.")
+
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")
 

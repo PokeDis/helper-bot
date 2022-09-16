@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from ..main import HelperBot
-from ..utils import valid_mons, Support
+from ..utils import Support, valid_mons
 
 
 class Collection(
@@ -17,17 +17,24 @@ class Collection(
 
     @commands.group(help="Shows all pokemon collected by a member")
     @commands.guild_only()
-    async def collect(self, ctx: commands.Context, member: Optional[discord.Member]) -> Optional[discord.Message]:
+    async def collect(
+        self, ctx: commands.Context, member: Optional[discord.Member]
+    ) -> Optional[discord.Message]:
         if ctx.invoked_subcommand is None:
             pronoun = "They" if member else "You"
             member = member or ctx.author
             data = await self.bot.db.collection_db.show(member.id)
             if data and data[1]:
-                sr_num = [f"{i}. {j.replace('-', ' ').title()}" for i, j in enumerate(data[1], start=1)]
+                sr_num = [
+                    f"{i}. {j.replace('-', ' ').title()}"
+                    for i, j in enumerate(data[1], start=1)
+                ]
                 chunks = list(discord.utils.as_chunks(sr_num, 10))
                 embeds = []
                 for i, j in enumerate(chunks):
-                    embed = discord.Embed(description="\n".join(j), color=discord.Color.blue())
+                    embed = discord.Embed(
+                        description="\n".join(j), color=discord.Color.blue()
+                    )
                     embed.set_author(
                         name=f"{ctx.author.name}'s collectibles",
                         icon_url=f"{ctx.author.display_avatar}",
@@ -119,14 +126,12 @@ class Collection(
 
     @collect.command(help="Remove all pokemon from your collectibles")
     @commands.guild_only()
-    async def clear(
-        self, ctx: commands.Context
-    ) -> Optional[discord.Message]:
+    async def clear(self, ctx: commands.Context) -> Optional[discord.Message]:
         await self.bot.db.collection_db.delete_record(ctx.author.id)
         embed = discord.Embed(
             description=f"<:tick:1001136782508826777> Successfully cleared your collectibles.",
             color=discord.Color.green(),
-            timestamp = discord.utils.utcnow(),
+            timestamp=discord.utils.utcnow(),
         )
         await ctx.send(embed=embed)
 
@@ -151,7 +156,7 @@ class Collection(
             )
             return await ctx.send(embed=notfound_embed)
 
-        if (s := await self.bot.db.collection_db.get_by_pokemon(neme_proc)):
+        if s := await self.bot.db.collection_db.get_by_pokemon(neme_proc):
             sr_no = [f"{i}. <@{j}>" for i, j in enumerate(s, start=1)]
             chunks = list(discord.utils.as_chunks(sr_no, 10))
             embeds = []
@@ -159,7 +164,7 @@ class Collection(
                 embed = discord.Embed(
                     title=f"{neme_proc} Collectors",
                     description="\n".join(j),
-                    color=discord.Color.blue()
+                    color=discord.Color.blue(),
                 )
                 embed.set_footer(text=f"Page {i + 1} of {len(chunks)}")
                 embeds.append(embed)
@@ -168,7 +173,7 @@ class Collection(
 
         sad_embed = discord.Embed(
             description=f"<:no:1001136828738453514> There's no `{neme_proc}` collector yet.",
-            color=discord.Color.red()
+            color=discord.Color.red(),
         )
         await ctx.send(embed=sad_embed)
 

@@ -185,7 +185,10 @@ class Ticket(
         self.bot = bot
 
     @staticmethod
-    async def set_perms(inter: typing.Union[commands.Context, discord.Interaction], channel: discord.TextChannel) -> None:
+    async def set_perms(
+        inter: typing.Union[commands.Context, discord.Interaction],
+        channel: discord.TextChannel,
+    ) -> None:
         community_helpers = inter.guild.get_role(998284527908683806)
         if community_helpers:
             await channel.set_permissions(
@@ -248,7 +251,9 @@ class Ticket(
     )
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
-    async def _ticket(self, ctx: commands.Context, member: discord.Member) -> typing.Optional[discord.Message]:
+    async def _ticket(
+        self, ctx: commands.Context, member: discord.Member
+    ) -> typing.Optional[discord.Message]:
         for text_channel in ctx.guild.text_channels:
             if member.name.lower() in text_channel.name:
                 embed1 = discord.Embed(

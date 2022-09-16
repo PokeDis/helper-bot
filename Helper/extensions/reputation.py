@@ -6,6 +6,7 @@ import humanfriendly
 from discord.ext import commands, tasks
 
 from ..main import HelperBot
+from ..utils import Support
 
 
 class Reputation(
@@ -45,6 +46,32 @@ class Reputation(
             embed.add_field(name="Reputation", value=f"{rep_data[1]}")
             return await ctx.send(embed=embed)
         return None
+
+    @rep.command(help="Leaderboard for reputation.")
+    @commands.guild_only()
+    async def leaderboard(
+        self, ctx: commands.Context, user: discord.Member | None = None
+    ) -> None:
+        member = user or ctx.author
+        rankers, rank = await self.bot.db.rep_db.get_leaderboard(member.id)
+        ur_rep = await self.bot.db.rep_db.get_rep(member.id)
+        embeds = []
+        count = 1
+        for i in range(0, len(rankers), 10):
+            embed = discord.Embed(color=discord.Color.blue())
+            embed.set_author(
+                name=f"Reputation Leaderboard", icon_url=member.display_avatar
+            )
+            embed.description = f"You rank {rank} out of {len(rankers)} users. With {ur_rep[1]} reputation."
+            for j in rankers[i : i + 10]:
+                embed.add_field(
+                    name=f"Rank {count}",
+                    value=f"Ranker <@{j[0]}> | Reputation: {j[1]}",
+                    inline=False,
+                )
+                count += 1
+            embeds.append(embed)
+        await Support().paginate(embeds, ctx)
 
     @rep.command(help="Give +1 rep to a member")
     @commands.cooldown(1, 120, commands.BucketType.user)

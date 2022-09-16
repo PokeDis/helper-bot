@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands, tasks
 
-from ..utils import DurationCoverter
+from ..utils import DurationCoverter, Support
 
 
 class GiveawayJoinView(discord.ui.View):
@@ -87,32 +87,38 @@ class Giveaway(
     async def giveaway(self, ctx: commands.Context) -> typing.Optional[discord.Message]:
         if ctx.invoked_subcommand is None:
             data = await self.bot.db.giveaway_db.all_records()
-            embed = discord.Embed(
-                title=f"{ctx.guild.name}'s Active Giveaways",
-                color=discord.Color.blue(),
-            )
-            embed.set_thumbnail(url=ctx.guild.icon)
-            count = 0
-            for record in data:
-                if not record[7]:
-                    count += 1
-                    giveaway_id = record[0]
-                    end_at = discord.utils.format_dt(
-                        datetime.fromtimestamp(record[4]), style="R"
-                    )
-                    prize = (
-                        record[3] if len(record[3]) <= 20 else record[3][0:17] + "..."
-                    )
-                    embed.add_field(
-                        name=f"Giveaway ID: {giveaway_id}",
-                        value=f"<:bullet:1014583675184230511> Ends at: {end_at}\n"
-                        f"<:bullet:1014583675184230511> Prize: {prize}\n"
-                        f"<:bullet:1014583675184230511> Hosted by: <@{record[5]}>\n"
-                        f"<:bullet:1014583675184230511> In: <#{record[6]}>",
-                        inline=False,
-                    )
-            embed.description = f"Total Active Giveaways: `{count}`"
-            return await ctx.send(embed=embed)
+            if not data:
+                return await ctx.send("No active giveaways!")
+            count = len([1 for _ in data if not data[7]])
+            embeds = []
+            for i in range(0, len(data), 5):
+                embed = discord.Embed(
+                    title=f"{ctx.guild.name}'s Active Giveaways",
+                    description=f"**{count}** active giveaways",
+                    color=discord.Color.blue(),
+                )
+                embed.set_thumbnail(url=ctx.guild.icon)
+                for record in data[i : i + 5]:
+                    if not record[7]:
+                        end_at = discord.utils.format_dt(
+                            datetime.fromtimestamp(record[4]), style="R"
+                        )
+                        prize = (
+                            record[3]
+                            if len(record[3]) <= 20
+                            else record[3][0:17] + "..."
+                        )
+                        embed.add_field(
+                            name=f"Giveaway ID: {record[0]}",
+                            value=f"<:bullet:1014583675184230511> Ends at: {end_at}\n"
+                            f"<:bullet:1014583675184230511> Prize: {prize}\n"
+                            f"<:bullet:1014583675184230511> Hosted by: <@{record[5]}>\n"
+                            f"<:bullet:1014583675184230511> In: <#{record[6]}>"
+                            f"[Click here to join!](https://discord.com/channels/{record[0]}/{record[6]}/{record[7]})",
+                            inline=False,
+                        )
+                embeds.append(embed)
+            return await Support().paginate(embeds, ctx)
 
     @giveaway.command(help="Start a giveaway")
     @commands.has_permissions(manage_guild=True)

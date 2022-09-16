@@ -149,9 +149,7 @@ class WarnDB(DatabaseModel):
         args = (*data,)
         await self.exec_write_query(
             "UPDATE warnlogs SET warns = $3, times = $4 WHERE member_id = $2 AND guild_id = $1",
-            (
-                args,
-            )
+            (args,),
         )
 
 
@@ -190,6 +188,15 @@ class RepDB(DatabaseModel):
                 user_id,
             ),
         )
+
+    async def get_leaderboard(self, user: int) -> tuple[list[asyncpg.Record], str]:
+        data = await self.exec_fetchall("SELECT * FROM reputation ORDER BY rep DESC")
+        rank = "Unranked"
+        for i, record in enumerate(data):
+            if record[0] == user:
+                rank = f"{i + 1}"
+                break
+        return data, rank
 
 
 class RepCooldownDB(DatabaseModel):
@@ -391,14 +398,10 @@ class CollectionDB(DatabaseModel):
             "CREATE TABLE IF NOT EXISTS collection (member_id BIGINT, pokemon VARCHAR(50)[])"
         )
 
-    async def show(
-        self, member_id: int
-    ) -> typing.Optional[asyncpg.Record]:
+    async def show(self, member_id: int) -> typing.Optional[asyncpg.Record]:
         data = await self.exec_fetchone(
             "SELECT * FROM collection WHERE member_id = $1",
-            (
-                member_id,
-            ),
+            (member_id,),
         )
         return data or []
 
@@ -416,14 +419,10 @@ class CollectionDB(DatabaseModel):
         else:
             await self.exec_write_query(
                 "DELETE FROM collection WHERE member_id = $1",
-                (
-                    member_id,
-                ),
+                (member_id,),
             )
 
-    async def add(
-        self, member_id: int, pokemon: str
-    ) -> None:
+    async def add(self, member_id: int, pokemon: str) -> None:
         data = await self.show(member_id)
         if not data:
             await self.exec_write_query(
@@ -449,16 +448,11 @@ class CollectionDB(DatabaseModel):
 
     async def delete_record(self, member_id: int) -> None:
         await self.exec_write_query(
-            "DELETE FROM collection WHERE message_id = $1",
-            (
-                member_id,
-            )
+            "DELETE FROM collection WHERE message_id = $1", (member_id,)
         )
 
     async def get_by_pokemon(self, pokemon: str) -> list[asyncpg.Record]:
-        data = await self.exec_fetchall(
-            "SELECT * FROM collection"
-        )
+        data = await self.exec_fetchall("SELECT * FROM collection")
         collector_ids = []
         for record in data:
             if pokemon in record[1]:

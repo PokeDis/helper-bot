@@ -1,2 +1,2 @@
 from .connect import Database
-from .db import RepCooldownDB, RepDB, TagDB, WarnDB, CollectionDB
+from .db import CollectionDB, RepCooldownDB, RepDB, TagDB, WarnDB
