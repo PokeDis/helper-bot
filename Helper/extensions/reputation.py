@@ -47,22 +47,22 @@ class Reputation(
             return await ctx.send(embed=embed)
         return None
 
-    @rep.command(help="Leaderboard for reputation")
+    @rep.command(help="Leaderboard for reputation.")
     @commands.guild_only()
     async def leaderboard(
-        self, ctx: commands.Context
+        self, ctx: commands.Context, user: discord.Member | None = None
     ) -> None:
-        rankers, rank = await self.bot.db.rep_db.get_leaderboard(ctx.author.id)
-        ur_rep = await self.bot.db.rep_db.get_rep(ctx.author.id)
+        member = user or ctx.author
+        rankers, rank = await self.bot.db.rep_db.get_leaderboard(member.id)
+        ur_rep = await self.bot.db.rep_db.get_rep(member.id)
         embeds = []
         count = 1
         for i in range(0, len(rankers), 10):
             embed = discord.Embed(color=discord.Color.blue())
             embed.set_author(
-                name=f"Reputation Leaderboard", icon_url=ctx.author.display_avatar
+                name=f"Reputation Leaderboard", icon_url=member.display_avatar
             )
-            if ur_rep:
-                embed.description = f"You rank {rank} out of {len(rankers)} users. With {ur_rep[1]} reputation."
+            embed.description = f"You rank {rank} out of {len(rankers)} users. With {ur_rep[1]} reputation."
             for j in rankers[i : i + 10]:
                 embed.add_field(
                     name=f"Rank {count}",
