@@ -114,7 +114,7 @@ class Giveaway(
                             f"<:bullet:1014583675184230511> Prize: {prize}\n"
                             f"<:bullet:1014583675184230511> Hosted by: <@{record[5]}>\n"
                             f"<:bullet:1014583675184230511> In: <#{record[6]}>"
-                            f"[Click here to join!](https://discord.com/channels/{record[0]}/{record[6]}/{record[7]})",
+                            f"[Click here to visit!](https://discord.com/channels/{record[0]}/{record[6]}/{record[7]})",
                             inline=False,
                         )
                 embeds.append(embed)

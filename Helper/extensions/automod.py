@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import datetime
 import time
 from collections import defaultdict
-from typing import Any, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional, Union
 
 import discord
 from discord.ext import commands
@@ -139,7 +137,7 @@ class SpamCheck:
         return is_fast
 
 
-class Mod(commands.Cog):
+class AutoMod(commands.Cog):
     def __init__(self, bot: HelperBot) -> None:
         self.bot = bot
         self._spam_check: defaultdict[int, SpamCheck] = defaultdict(SpamCheck)
@@ -230,10 +228,10 @@ class Mod(commands.Cog):
     @staticmethod
     async def start_lockdown(
         ctx: commands.Context,
-        channels: list[discord.TextChannel | discord.VoiceChannel],
+        channels: list[Union[discord.TextChannel, discord.VoiceChannel]],
     ) -> tuple[
-        list[discord.TextChannel | discord.VoiceChannel],
-        list[discord.TextChannel | discord.VoiceChannel],
+        list[Union[discord.TextChannel, discord.VoiceChannel]],
+        list[Union[discord.TextChannel, discord.VoiceChannel]],
     ]:
         success, failures = [], []
         reason = f"Lockdown request by {ctx.author} (ID: {ctx.author.id})"
@@ -242,7 +240,7 @@ class Mod(commands.Cog):
                 for role in ctx.guild.roles:
                     if (
                         not role.permissions.administrator
-                        and not role.permissions.is_bot_managed()
+                        and not role.is_bot_managed()
                     ):
                         try:
                             await channel.set_permissions(
@@ -265,10 +263,10 @@ class Mod(commands.Cog):
     @staticmethod
     async def end_lockdown(
         ctx: commands.Context,
-        channels: list[discord.TextChannel | discord.VoiceChannel],
+        channels: list[Union[discord.TextChannel, discord.VoiceChannel]],
     ) -> tuple[
-        list[discord.TextChannel | discord.VoiceChannel],
-        list[discord.TextChannel | discord.VoiceChannel],
+        list[Union[discord.TextChannel, discord.VoiceChannel]],
+        list[Union[discord.TextChannel, discord.VoiceChannel]],
     ]:
         success, failures = [], []
         reason = f"Lockdown-Lift request by {ctx.author} (ID: {ctx.author.id})"
@@ -298,12 +296,12 @@ class Mod(commands.Cog):
         return success, failures
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @commands.has_permissions(manage_channels=True)
     async def lockdown(
         self,
         ctx: commands.Context,
         *,
-        channels: commands.Greedy[discord.TextChannel | discord.VoiceChannel] = None,
+        channels: commands.Greedy[Union[discord.TextChannel, discord.VoiceChannel]] = None,
     ):
         """Locks down the server or specified channels."""
         if channels is None:
@@ -323,7 +321,7 @@ class Mod(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        channels: commands.Greedy[discord.TextChannel | discord.VoiceChannel] = None,
+        channels: commands.Greedy[Union[discord.TextChannel, discord.VoiceChannel]] = None,
     ):
         """Lifts lockdown on the server or specified channels."""
         if channels is None:
@@ -342,4 +340,4 @@ class Mod(commands.Cog):
 
 
 async def setup(bot: HelperBot) -> None:
-    await bot.add_cog(Mod(bot))
+    await bot.add_cog(AutoMod(bot))
