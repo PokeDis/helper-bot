@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-import asyncio
-import os
-
-import asyncpg
-
 from .db import *
 
 __all__: tuple[str, ...] = ("Database",)
 
 
 class Database:
-
-    database_pool: asyncpg.pool.Pool
 
     def __init__(self):
         self.warn_db = WarnDB()
@@ -22,21 +15,3 @@ class Database:
         self.giveaway_db = GiveawayDB()
         self.reminder_db = ReminderDB()
         self.collection_db = CollectionDB()
-
-    async def setup(self) -> None:
-        self.database_pool = await asyncpg.create_pool(
-            host=os.getenv("PGHOST"),
-            user=os.getenv("PGUSER"),
-            database=os.getenv("PGDATABASE"),
-            password=os.getenv("PGPASSWORD"),
-            port=os.getenv("PGPORT"),
-            ssl="require",
-            loop=asyncio.get_event_loop(),
-        )
-        await self.tag_db.setup(self)
-        await self.warn_db.setup(self)
-        await self.rep_db.setup(self)
-        await self.rep_cd_db.setup(self)
-        await self.giveaway_db.setup(self)
-        await self.reminder_db.setup(self)
-        await self.collection_db.setup(self)

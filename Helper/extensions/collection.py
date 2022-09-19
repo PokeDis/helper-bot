@@ -24,10 +24,10 @@ class Collection(
             pronoun = "They" if member else "You"
             member = member or ctx.author
             data = await self.bot.db.collection_db.show(member.id)
-            if data and data[1]:
+            if data and data["pokemon"]:
                 sr_num = [
                     f"{i}. {j.replace('-', ' ').title()}"
-                    for i, j in enumerate(data[1], start=1)
+                    for i, j in enumerate(data["pokemon"], start=1)
                 ]
                 chunks = list(discord.utils.as_chunks(sr_num, 10))
                 embeds = []
@@ -72,7 +72,7 @@ class Collection(
             return await ctx.send(embed=notfound_embed)
 
         s = await self.bot.db.collection_db.show(ctx.author.id)
-        if s and neme_proc in s[1]:
+        if s and neme_proc in s["pokemon"]:
             embed1 = discord.Embed(
                 description=f"<:no:1001136828738453514> This pokemon is already in your collectibles.",
                 color=discord.Color.red(),
@@ -109,7 +109,7 @@ class Collection(
             return await ctx.send(embed=notfound_embed)
 
         data = await self.bot.db.collection_db.show(ctx.author.id)
-        if neme_proc not in data[1]:
+        if neme_proc not in data["pokemon"]:
             embed1 = discord.Embed(
                 description=f"<:no:1001136828738453514> {neme_proc} is not in your collectibles.",
                 color=discord.Color.red(),
@@ -133,7 +133,7 @@ class Collection(
             color=discord.Color.green(),
             timestamp=discord.utils.utcnow(),
         )
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @collect.command(help="Shows all members who collect a pokemon")
     @commands.guild_only()

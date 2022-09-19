@@ -12,11 +12,10 @@ from Helper.extensions.ticket import (InsideTicketView, TicketCloseView,
 
 from ..database import Database
 
-load_dotenv()
-
 
 class HelperBot(commands.Bot):
 
+    load_dotenv()
     database_pool: asyncpg.pool.Pool
     launch_time: datetime.datetime
     db: Database
@@ -41,7 +40,6 @@ class HelperBot(commands.Bot):
         self.add_view(TicketCloseView())
         self.add_view(GiveawayJoinView(self))
         self.db = Database()
-        await self.db.setup()
         self.launch_time = discord.utils.utcnow()
         self.logs = self.get_channel(self.LOGCHANNEL) or await self.fetch_channel(
             self.LOGCHANNEL

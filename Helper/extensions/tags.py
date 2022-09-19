@@ -148,7 +148,7 @@ class Tag(
         if not (tag_data := await self.bot.db.tag_db.get_tag(tag)):
             return await ctx.send(embed=self.INVALIDTAG)
 
-        if not await self.can_edit_tag(ctx, tag_data[0]):
+        if not await self.can_edit_tag(ctx, tag_data["user_id"]):
             return None
 
         await self.bot.db.tag_db.delete_tag(tag)
@@ -167,7 +167,7 @@ class Tag(
         if not (tag_data := await self.bot.db.tag_db.get_tag(name)):
             return await ctx.send(embed=self.INVALIDTAG)
 
-        if not await self.can_edit_tag(ctx, tag_data[0]):
+        if not await self.can_edit_tag(ctx, tag_data["user_id"]):
             return None
 
         await self.bot.db.tag_db.update_tag(name, content)

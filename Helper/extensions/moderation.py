@@ -315,17 +315,17 @@ class Moderation(
     async def clean_warns(self) -> None:
         data = await self.bot.db.warn_db.get_all()
         for raw in data:
-            for time in raw[3]:
+            for time in raw["times"]:
                 diff = datetime.now() - datetime.fromtimestamp(float(time))
                 clear_after = 5260000 - round(diff.total_seconds())
                 clear_at = datetime.now() + timedelta(seconds=clear_after)
                 if datetime.now() >= clear_at:
-                    index = raw[3].index(time)
-                    if len(raw[3]) > 1:
-                        await self.bot.db.warn_db.remove_warn(raw[0], raw[1])
+                    index = raw["times"].index(time)
+                    if len(raw["times"]) > 1:
+                        await self.bot.db.warn_db.remove_warn(raw["guild_id"], raw["member_id"])
                     else:
-                        raw[2].remove(raw[2][index])
-                        raw[3].remove(raw[3][index])
+                        raw["warns"].remove(raw["warns"][index])
+                        raw["times"].remove(raw["times"][index])
                         await self.bot.db.warn_db.update_warn(raw)
 
     @clean_warns.before_loop

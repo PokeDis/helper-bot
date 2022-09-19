@@ -17,18 +17,18 @@ class GiveawayJoinView(discord.ui.View):
     @staticmethod
     async def make_base_embed(bot, message_id: int) -> discord.Embed:
         data = await bot.db.giveaway_db.get_giveaway(message_id)
-        time = datetime.fromtimestamp(data[4])
+        time = datetime.fromtimestamp(data["end_time"])
         relative_time = discord.utils.format_dt(time, style="R")
         full_time = discord.utils.format_dt(time, style="f")
         embed = discord.Embed(
-            title=f"{data[3]}",
+            title=f"{data['prize']}",
             description=f"<:bullet:1014583675184230511> Ends: {relative_time} ({full_time})\n"
-            f"<:bullet:1014583675184230511> Hosted by: <@{data[5]}>\n"
-            f"<:bullet:1014583675184230511> Entries: {len(data[1])}\n"
-            f"<:bullet:1014583675184230511> Winners: {data[2]}\n",
+            f"<:bullet:1014583675184230511> Hosted by: <@{data['host']}>\n"
+            f"<:bullet:1014583675184230511> Entries: {len(data['participants'])}\n"
+            f"<:bullet:1014583675184230511> Winners: {data['winners']}\n",
             color=discord.Color.blue(),
         )
-        embed.timestamp = datetime.fromtimestamp(data[4])
+        embed.timestamp = datetime.fromtimestamp(data["end_time"])
         return embed
 
     @staticmethod
@@ -38,10 +38,10 @@ class GiveawayJoinView(discord.ui.View):
         relative_time = discord.utils.format_dt(time, style="R")
         full_time = discord.utils.format_dt(time, style="f")
         embed = discord.Embed(
-            title=f"{data[3]}",
+            title=f"{data['prize']}",
             description=f"<:bullet:1014583675184230511> Ended: {relative_time} ({full_time})\n"
-            f"<:bullet:1014583675184230511> Hosted by: <@{data[5]}>\n"
-            f"<:bullet:1014583675184230511> Entries: {len(data[1])}\n"
+            f"<:bullet:1014583675184230511> Hosted by: <@{data['host']}>\n"
+            f"<:bullet:1014583675184230511> Entries: {len(data['participants'])}\n"
             f"<:bullet:1014583675184230511> Winners: {', '.join(map(lambda x: f'<@!{x}>', winner_id))}\n",
             color=discord.Color.blue(),
         )
@@ -89,7 +89,7 @@ class Giveaway(
             data = await self.bot.db.giveaway_db.all_records()
             if not data:
                 return await ctx.send("No active giveaways!")
-            count = len([1 for _ in data if not data[7]])
+            count = len([1 for _ in data if not data["ended"]])
             embeds = []
             for i in range(0, len(data), 5):
                 embed = discord.Embed(
@@ -99,22 +99,23 @@ class Giveaway(
                 )
                 embed.set_thumbnail(url=ctx.guild.icon)
                 for record in data[i : i + 5]:
-                    if not record[7]:
+                    if not record["ended"]:
                         end_at = discord.utils.format_dt(
-                            datetime.fromtimestamp(record[4]), style="R"
+                            datetime.fromtimestamp(record["end_time"]), style="R"
                         )
                         prize = (
-                            record[3]
-                            if len(record[3]) <= 20
-                            else record[3][0:17] + "..."
+                            record["prize"]
+                            if len(record["prize"]) <= 20
+                            else record["prize"][0:17] + "..."
                         )
+                        message = self.bot.get_channel(record["channel"]).get_partial_message(record["message_id"])
                         embed.add_field(
-                            name=f"Giveaway ID: {record[0]}",
+                            name=f"Giveaway ID: {record['message_id']}",
                             value=f"<:bullet:1014583675184230511> Ends at: {end_at}\n"
                             f"<:bullet:1014583675184230511> Prize: {prize}\n"
-                            f"<:bullet:1014583675184230511> Hosted by: <@{record[5]}>\n"
-                            f"<:bullet:1014583675184230511> In: <#{record[6]}>"
-                            f"[Click here to visit!](https://discord.com/channels/{record[0]}/{record[6]}/{record[7]})",
+                            f"<:bullet:1014583675184230511> Hosted by: <@{record['host']}>\n"
+                            f"<:bullet:1014583675184230511> In: <#{record['channel']}>"
+                            f"[Click here to visit!]({message.jump_url})",
                             inline=False,
                         )
                 embeds.append(embed)
@@ -159,10 +160,10 @@ class Giveaway(
             )
             await asyncio.sleep(duration.total_seconds())
             data = await self.bot.db.giveaway_db.get_giveaway(message.id)
-            if data and not data[7]:
-                if len(data[1]) >= data[2]:
+            if data and not data["ended"]:
+                if len(data["participants"]) >= data["winners"]:
                     await self.bot.db.giveaway_db.update_bool(message.id)
-                    winner_list = random.sample(data[1], k=data[2])
+                    winner_list = random.sample(data["participants"], k=data["winners"])
                     await message.reply(
                         "Congratulations "
                         + ", ".join(map(lambda x: f"<@!{x}>", winner_list))
@@ -198,28 +199,28 @@ class Giveaway(
     @commands.guild_only()
     async def end(self, ctx: commands.Context, message_id: int) -> None:
         data = await self.bot.db.giveaway_db.get_giveaway(message_id)
-        if len(data) and not data[7]:
-            if len(data[1]) >= data[2]:
+        if len(data) and not data["ended"]:
+            if len(data["participants"]) >= data["winners"]:
                 await self.bot.db.giveaway_db.update_bool(message_id)
-                channel = self.bot.get_channel(data[6]) or await self.bot.fetch_channel(
-                    data[6]
+                channel = self.bot.get_channel(data["channel"]) or await self.bot.fetch_channel(
+                    data["channel"]
                 )
-                message = channel.get_partial_message(data[0])
-                winner_list = random.sample(data[1], k=data[2])
+                message = channel.get_partial_message(data["message_id"])
+                winner_list = random.sample(data["participants"], k=data["winners"])
                 await message.reply(
                     "Congratulations "
                     + ", ".join(map(lambda x: f"<@!{x}>", winner_list))
-                    + f"! You won **{data[3]}**"
+                    + f"! You won **{data['prize']}**"
                 )
                 end_embed = await GiveawayJoinView.make_after_embed(
                     self.bot, message_id, winner_list
                 )
                 await message.edit(embed=end_embed, view=None)
             else:
-                channel = self.bot.get_channel(data[6]) or await self.bot.fetch_channel(
-                    data[6]
+                channel = self.bot.get_channel(data["channel"]) or await self.bot.fetch_channel(
+                    data["channel"]
                 )
-                message = channel.get_partial_message(data[0])
+                message = channel.get_partial_message(data["message_id"])
                 a_embed = discord.Embed(
                     description="<:no:1001136828738453514> I couldn't determine a winner for that giveaway...\n"
                     "**Reason:** Less number of people joined than winners to be declared.",
@@ -244,9 +245,9 @@ class Giveaway(
     @commands.guild_only()
     async def reroll(self, ctx: commands.Context, message_id: int) -> None:
         data = await self.bot.db.giveaway_db.get_giveaway(message_id)
-        if len(data) and data[7]:
+        if len(data) and data["ended"]:
             await ctx.send(
-                f"Congratulations <@!{random.choice(data[1])}>! You are the new winner of **{data[3]}**"
+                f"Congratulations <@!{random.choice(data['participants'])}>! You are the new winner of **{data['prize']}**"
             )
             return
         embed = discord.Embed(
@@ -261,22 +262,22 @@ class Giveaway(
         time = datetime.now()
         records = await self.bot.db.giveaway_db.by_time(time.timestamp())
         for record in records:
-            channel = self.bot.get_channel(record[6]) or await self.bot.fetch_channel(
-                record[6]
+            channel = self.bot.get_channel(record['channel']) or await self.bot.fetch_channel(
+                record['channel']
             )
-            message = channel.get_partial_message(record[0])
-            embed = await GiveawayJoinView.make_base_embed(self.bot, record[0])
+            message = channel.get_partial_message(record['message_id'])
+            embed = await GiveawayJoinView.make_base_embed(self.bot, record['message_id'])
             await message.edit(embed=embed)
-            if len(record[1]) >= record[2]:
-                await self.bot.db.giveaway_db.update_bool(record[0])
-                winner_list = random.sample(record[1], k=record[2])
+            if len(record['participants']) >= record['winners']:
+                await self.bot.db.giveaway_db.update_bool(record['message_id'])
+                winner_list = random.sample(record['participants'], k=record['winners'])
                 await message.reply(
                     "Congratulations "
                     + ", ".join(map(lambda x: f"<@!{x}>", winner_list))
-                    + f"! You won **{record[3]}**"
+                    + f"! You won **{record['prize']}**"
                 )
                 end_embed = await GiveawayJoinView.make_after_embed(
-                    self.bot, record[0], winner_list
+                    self.bot, record['message_id'], winner_list
                 )
                 await message.edit(embed=end_embed, view=None)
             else:
@@ -286,21 +287,21 @@ class Giveaway(
                     color=discord.Color.red(),
                 )
                 c_embed = await GiveawayJoinView.make_after_embed(
-                    self.bot, record[0], [self.bot.user.id]
+                    self.bot, record['message_id'], [self.bot.user.id]
                 )
                 await message.reply(embed=a_embed)
                 await message.edit(embed=c_embed, view=None)
-                await self.bot.db.giveaway_db.end_giveaway(record[0])
+                await self.bot.db.giveaway_db.end_giveaway(record['message_id'])
 
     @tasks.loop(minutes=30)
     async def delete_giveaway(self):
         time = datetime.now()
         data = await self.bot.db.giveaway_db.all_records()
         for record in data:
-            delete_time = datetime.fromtimestamp(record[4]) + timedelta(hours=24)
+            delete_time = datetime.fromtimestamp(record['end_time']) + timedelta(hours=24)
             left = delete_time - time
             if left.total_seconds() <= 0:
-                return await self.bot.db.giveaway_db.end_giveaway(record[0])
+                return await self.bot.db.giveaway_db.end_giveaway(record['message_id'])
 
     @update_giveaway.before_loop
     async def before_update_giveaway(self):

@@ -43,7 +43,7 @@ class Reputation(
                 embed.add_field(name="Reputation", value="0")
                 return await ctx.send(embed=embed)
 
-            embed.add_field(name="Reputation", value=f"{rep_data[1]}")
+            embed.add_field(name="Reputation", value=f"{rep_data['rep']}")
             return await ctx.send(embed=embed)
         return None
 
@@ -62,11 +62,11 @@ class Reputation(
                 name=f"Reputation Leaderboard", icon_url=ctx.author.display_avatar
             )
             if ur_rep:
-                embed.description = f"You rank {rank} out of {len(rankers)} users. With {ur_rep[1]} reputation."
+                embed.description = f"You rank {rank} out of {len(rankers)} users. With {ur_rep['rep']} reputation."
             for j in rankers[i : i + 10]:
                 embed.add_field(
                     name=f"Rank {count}",
-                    value=f"Ranker <@{j[0]}> | Reputation: {j[1]}",
+                    value=f"Ranker <@{j['user_id']}> | Reputation: {j['rep']}",
                     inline=False,
                 )
                 count += 1
@@ -85,9 +85,9 @@ class Reputation(
         )
 
         data = await self.bot.db.rep_cd_db.cd_log(ctx.author.id)
-        if len(data) and member.id in data[1]:
-            index = data[1].index(member.id)
-            time = data[2][index]
+        if len(data) and member.id in data["member_b_ids"]:
+            index = data["member_b_ids"].index(member.id)
+            time = data["times"][index]
             diff = datetime.now() - datetime.fromtimestamp(float(time))
             cooldown = 7200 - round(diff.total_seconds())
             error = commands.CommandOnCooldown(
@@ -110,7 +110,7 @@ class Reputation(
             return await ctx.send(embed=embed)
 
         s = await self.bot.db.rep_db.get_rep(member.id)
-        new_rep = s[1] + 1
+        new_rep = s['rep'] + 1
         await self.bot.db.rep_db.update_rep(member.id, new_rep)
         await self.bot.db.rep_cd_db.cd_entry(
             ctx.author.id, member.id, ctx.message.created_at.timestamp()
@@ -139,11 +139,11 @@ class Reputation(
         if not data:
             return await ctx.send(embed=embed2)
         s = await self.bot.db.rep_db.get_rep(member.id)
-        if s[1] == 0:
+        if s['rep'] == 0:
             return await ctx.send(embed=embed2)
-        if s[1] - amount < 0:
+        if s['rep'] - amount < 0:
             return await ctx.send(embed=embed3)
-        new_rep = s[1] - amount
+        new_rep = s['rep'] - amount
         await self.bot.db.rep_db.update_rep(member.id, new_rep)
         return await ctx.send(embed=embed1)
 
@@ -167,20 +167,20 @@ class Reputation(
     async def clean_rep_cd(self) -> None:
         data = await self.bot.db.rep_cd_db.get_all()
         for raw in data:
-            if not raw[2]:
-                await self.bot.db.rep_cd_db.remove_cd(raw[0])
+            if not raw["times"]:
+                await self.bot.db.rep_cd_db.remove_cd(raw["member_a_id"])
                 continue
-            for time in raw[2]:
+            for time in raw["times"]:
                 diff = datetime.now() - datetime.fromtimestamp(float(time))
                 clear_after = 6600 - round(diff.total_seconds())
                 clear_at = datetime.now() + timedelta(seconds=clear_after)
                 if datetime.now() >= clear_at:
-                    index = raw[2].index(time)
-                    if len(raw[2]) > 1:
-                        await self.bot.db.rep_cd_db.remove_cd(raw[0])
+                    index = raw["times"].index(time)
+                    if len(raw["times"]) > 1:
+                        await self.bot.db.rep_cd_db.remove_cd(raw["member_a_id"])
                     else:
-                        raw[1].remove(raw[1][index])
-                        raw[2].remove(raw[2][index])
+                        raw["member_b_ids"].remove(raw["member_b_ids"][index])
+                        raw["times"].remove(raw["times"][index])
                         await self.bot.db.rep_cd_db.update_cd(*raw)
 
     @clean_rep_cd.before_loop
