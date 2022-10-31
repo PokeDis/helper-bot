@@ -15,3 +15,4 @@ class Database:
         self.giveaway_db = GiveawayDB()
         self.reminder_db = ReminderDB()
         self.collection_db = CollectionDB()
+        self.roles_db = RolesDB()

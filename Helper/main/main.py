@@ -1,7 +1,6 @@
 import datetime
 import os
 
-import asyncpg
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -16,7 +15,6 @@ from ..database import Database
 class HelperBot(commands.Bot):
 
     load_dotenv()
-    database_pool: asyncpg.pool.Pool
     launch_time: datetime.datetime
     db: Database
     logs: discord.TextChannel

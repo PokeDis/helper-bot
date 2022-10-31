@@ -14,6 +14,7 @@ __all__: tuple[str, ...] = (
     "GiveawayDB",
     "ReminderDB",
     "CollectionDB",
+    "RolesDB"
 )
 
 
@@ -277,3 +278,44 @@ class CollectionDB(MongoDb):
         data = await self.collection.find({"pokemon": pokemon}).to_list(None)
         collector_ids = [i["member_id"] for i in data if pokemon in i["pokemon"]]
         return collector_ids
+
+
+class RolesDB(MongoDb):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.collection = self.client["servers"]["selfroles"]
+
+    async def register_roles(
+        self,
+        menu_message: str,
+        guild_id: int,
+        channel_id: int,
+        message_id: int,
+    ) -> None:
+        await self.collection.insert_one(
+            {
+                "menu_message": menu_message,
+                "guild_id": guild_id,
+                "channel_id": channel_id,
+                "message_id": message_id,
+                "role_ids": [],
+            }
+        )
+
+    async def get_menu(self, message_id: int) -> None:
+        data = await self.collection.find_one({"message_id": message_id})
+        return data if data else None
+
+    async def add_roles(self, message_id: int, role_ids: list[int]) -> None:
+        data = await self.get_menu(message_id)
+        data["role_ids"].extend(role_ids)
+        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(dict.fromkeys(data["role_ids"]))}})
+
+    async def remove_roles(self, message_id: int, role_ids: list[int]) -> None:
+        data = await self.get_menu(message_id)
+        updated_list = [i for i in data["role_ids"] if i not in role_ids]
+        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": updated_list}})
+
+    async def delete_menu(self, message_id: int) -> None:
+        await self.collection.delete_one({"message_id": message_id})
