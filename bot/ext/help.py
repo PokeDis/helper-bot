@@ -97,6 +97,8 @@ class Formatter:
             color=discord.Color.random(),
         )
         for k, v in sorted(self.ctx.bot.cogs.items(), key=lambda c: c[0][0]):
+            if len(v.get_commands()) == 0:
+                continue
             embed.add_field(name=f"{k}", value=f"*{v.description or 'No description provided.'}*", inline=False)
         embed.set_thumbnail(url=self.ctx.bot.user.display_avatar)
         return embed
