@@ -1,5 +1,6 @@
-from Helper import HelperBot
+import asyncio
+
+from bot import PokeHelper
 
 if __name__ == "__main__":
-    bot = HelperBot()
-    bot.begin()
+    asyncio.run(PokeHelper().start())

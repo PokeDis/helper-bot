@@ -27,6 +27,3 @@ jobs:
         run: |
           poetry run isort .
           poetry run black .
-      - name: Linting with mypy
-        run: |
-          poetry run mypy .

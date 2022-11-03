@@ -7,6 +7,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+discord = "^2.0.0"
+motor = "^3.1.1"
+python-dotenv = "^0.21.0"
+time-str = "^1.0.0"
+humanfriendly = "^10.0"
+Pillow = "^9.3.0"
+chat-exporter = "^2.4.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -35,7 +42,6 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 disallow_untyped_calls = true
 disallow_untyped_decorators = true
-strict = true
 strict_equality = true
 strict_optional = true
 warn_redundant_casts = true
