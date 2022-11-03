@@ -9,6 +9,7 @@ __all__: tuple[str, ...] = (
     "Collection",
     "Giveaway",
     "Reminder",
+    "Menu",
 )
 
 
@@ -149,3 +150,30 @@ class Reminder:
             "channel_id": self.channel_id,
             "user_id": self.user_id,
         }
+
+
+@dataclasses.dataclass
+class Menu:
+    message_id: int
+    channel_id: int
+    guild_id: int
+    message: str
+    role_ids: set[int] = dataclasses.field(default_factory=set)
+
+    def __post_init__(self) -> None:
+        self.role_ids: set[int] = set(self.role_ids)
+
+    def get_payload(self) -> dict[str, int | str]:
+        return {
+            "message_id": self.message_id,
+            "channel_id": self.channel_id,
+            "guild_id": self.guild_id,
+            "message": self.message,
+            "role_ids": list(self.role_ids),
+        }
+
+    def add_roles(self, roles: list[int]) -> None:
+        self.role_ids.update(roles)
+
+    def remove_roles(self, roles: list[int]) -> None:
+        self.role_ids.difference_update(roles)

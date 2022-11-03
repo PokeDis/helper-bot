@@ -7,7 +7,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from bot.core.helper import POKEMONS
-from bot.core.views import GiveawayJoinView, InsideTicketView, TicketCloseView, TicketCreateView
+from bot.core.views import GiveawayJoinView, InsideTicketView, TicketCloseView, TicketCreateView, RoleView
 from bot.database import Mongo
 
 LOGGER = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class PokeHelper(commands.Bot):
             if file.endswith(".py") and not file.startswith("_")
         ]
         self.logs = self.get_channel(998285318987989063) or await self.fetch_channel(998285318987989063)
-        self.add_views(GiveawayJoinView(self), TicketCreateView(), TicketCloseView(), InsideTicketView())
+        self.add_views(GiveawayJoinView(self), TicketCreateView(), TicketCloseView(), InsideTicketView(), RoleView())
 
     async def on_ready(self) -> None:
         print(f"Logged in as {self.user}")

@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from .models import Collection, Giveaway, Reminder, Tag, UserRep, WarnLog
+from .models import Collection, Giveaway, Reminder, Tag, UserRep, WarnLog, Menu
 
 if typing.TYPE_CHECKING:
     from .database import Mongo
@@ -14,6 +14,7 @@ __all__: tuple[str, ...] = (
     "CollectionDB",
     "GiveawayDB",
     "ReminderDB",
+    "RolesDB",
 )
 
 
@@ -304,3 +305,35 @@ class ReminderDB:
         time = datetime.datetime.now()
         data = await self.collection.find({"end_time": {"$gte": time}}).to_list()
         return [Reminder(**reminder) for reminder in data]
+
+
+class RolesDB:
+
+    def __init__(self, client: "Mongo") -> None:
+        self.client = client
+        self.collection = client["data"]["roles"]
+        self.client.roles = self
+
+    async def add_menu(self, data: Menu) -> None:
+        await self.collection.insert_one(data.get_payload())
+
+    async def get_menu(self, message_id: int) -> Menu | None:
+        data = await self.collection.find_one({"message_id": message_id}, {"_id": 0})
+        return Menu(**data) if data else None
+
+    async def add_roles(self, message_id: int, roles: list[int]) -> None:
+        menu = await self.get_menu(message_id)
+        if menu is None:
+            return
+        menu.add_roles(roles)
+        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(menu.role_ids)}})
+
+    async def remove_roles(self, message_id: int, roles: list[int]) -> None:
+        menu = await self.get_menu(message_id)
+        if menu is None:
+            return
+        menu.remove_roles(roles)
+        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(menu.role_ids)}})
+
+    async def delete_menu(self, message_id: int) -> None:
+        await self.collection.delete_one({"message_id": message_id})

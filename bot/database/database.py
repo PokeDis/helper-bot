@@ -13,6 +13,7 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
     collections: CollectionDB
     giveaways: GiveawayDB
     reminders: ReminderDB
+    roles: RolesDB
 
     def __init__(self) -> None:
         super().__init__(os.getenv("MONGODB"))
@@ -22,3 +23,4 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
         CollectionDB(self)
         GiveawayDB(self)
         ReminderDB(self)
+        RolesDB(self)
