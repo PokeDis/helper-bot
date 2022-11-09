@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 
 class SelfRoles(commands.Cog):
 
-    """"Sets up self roles for the server."""
+    """Sets up self roles for the server."""
 
     def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot

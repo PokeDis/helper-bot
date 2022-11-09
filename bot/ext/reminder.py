@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
 
 class Reminder(commands.Cog):
 
-    """ "Reminders to keep you in check with your tasks."""
+    """Reminders to keep you in check with your tasks."""
 
     def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot
@@ -33,12 +33,12 @@ class Reminder(commands.Cog):
         ctx: commands.Context,
         duration: DurationConvertor,
         *,
-        _message: str = "You asked me to remind you of this",
+        about: str,
     ) -> None:
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(
                 description=f"<:tick:1001136782508826777> I will remind you in "
-                f"{humanfriendly.format_timespan(duration.total_seconds())}.",
+                f"{humanfriendly.format_timespan(duration.total_seconds())} about `{about}`.",
                 color=discord.Color.green(),
             )
             msg = await ctx.send(embed=embed)
@@ -50,10 +50,10 @@ class Reminder(commands.Cog):
             if data is not None:
                 embed = discord.Embed(
                     description=f"<:tick:1001136782508826777> You asked me to remind you about"
-                    f" [message]({ctx.message.jump_url})",
+                    f" [message]({msg.jump_url}).",
                     color=discord.Color.green(),
                 )
-                await msg.reply(embed=embed)
+                await msg.reply(content=ctx.author.mention, embed=embed)
                 await self.bot.db.reminders.delete_reminder(msg.id)
 
     @reminder.command(name="delete", help="Delete a reminder")
@@ -102,7 +102,7 @@ class Reminder(commands.Cog):
                 embed.add_field(
                     name=f"ID: {reminder.message_id}",
                     value=f"<:bullet:1014583675184230511>Reminder in: "
-                    f"{discord.utils.format_dt(reminder.time, style='R')}\n"
+                    f"{discord.utils.format_dt(reminder.end_time, style='R')}\n"
                     f"[Jump to message]"
                     f"(https://discord.com/channels/{reminder.guild_id}/{reminder.channel_id}/{reminder.message_id})",
                     inline=False,
@@ -114,12 +114,16 @@ class Reminder(commands.Cog):
     @tasks.loop(seconds=10)
     async def check_reminders(self) -> None:
         reminders = await self.bot.db.reminders.get_reminder_by_time
+        print(reminders)
         for reminder in reminders:
             channel = self.bot.get_channel(reminder.channel_id) or await self.bot.fetch_channel(reminder.channel_id)
             if channel is None:
+                print("fuck")
                 continue
             message = await channel.fetch_message(reminder.message_id)
+            print("3")
             if message is None:
+                print("ded")
                 continue
             embed = discord.Embed(
                 description=f"<:tick:1001136782508826777> You asked me to remind you about"

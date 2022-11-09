@@ -40,7 +40,7 @@ class RoleView(discord.ui.View):
     def __init__(
         self,
         *,
-        timeout=180,
+        timeout: float | None = None,
     ) -> None:
         super().__init__(timeout=timeout)
 
@@ -50,3 +50,4 @@ class RoleView(discord.ui.View):
         self.role_list = role_list
         self.add_item(RoleMenu(role_list))
         return self
+        

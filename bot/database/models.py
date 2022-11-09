@@ -137,7 +137,7 @@ class Giveaway:
 @dataclasses.dataclass
 class Reminder:
     message_id: int
-    time: datetime.datetime
+    end_time: datetime.datetime
     guild_id: int
     channel_id: int
     user_id: int
@@ -145,7 +145,7 @@ class Reminder:
     def get_payload(self) -> dict[str, int | datetime.datetime]:
         return {
             "message_id": self.message_id,
-            "time": self.time,
+            "end_time": self.end_time,
             "guild_id": self.guild_id,
             "channel_id": self.channel_id,
             "user_id": self.user_id,

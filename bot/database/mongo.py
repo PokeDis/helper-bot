@@ -37,19 +37,19 @@ class TagDB:
         await self.collection.delete_one({"tag": name})
 
     async def get_tag(self, tag: str) -> Tag | None:
-        data = await self.collection.find_one({"tag": tag, "_id": 0})
+        data = await self.collection.find_one({"tag": tag}, {"_id": 0})
         return Tag(**data) if data else None
 
     async def update_tag(self, name: str, content: str) -> None:
         await self.collection.update_one({"tag": name}, {"$set": {"content": content}})
 
     async def get_user_tags(self, user_id: int) -> list[Tag]:
-        tags = await self.collection.find({"user_id": user_id}).to_list()
+        tags = await self.collection.find({"user_id": user_id}, {"_id": 0}).to_list(None)
         return [Tag(**tag) for tag in tags]
 
     @property
     async def get_all_tags(self) -> list[Tag]:
-        tags = await self.collection.find().to_list()
+        tags = await self.collection.find({"_id": 0}).to_list(None)
         return [Tag(**tag) for tag in tags]
 
 
@@ -94,12 +94,12 @@ class WarnDB:
         return logs
 
     async def get_guild_warns(self, guild_id: int) -> list[WarnLog]:
-        logs = await self.collection.find({"guild_id": guild_id}).to_list()
+        logs = await self.collection.find({"guild_id": guild_id}, {"_id": 0}).to_list(None)
         return [WarnLog(**log) for log in logs]
 
     @property
     async def get_all_warns(self) -> list[WarnLog]:
-        logs = await self.collection.find().to_list()
+        logs = await self.collection.find({"_id": 0}).to_list(None)
         return [WarnLog(**log) for log in logs]
 
 
@@ -156,17 +156,17 @@ class RepDB:
 
     @property
     async def leaderboard(self) -> list[UserRep]:
-        data = await self.collection.find().sort("reps", -1).to_list()
+        data = await self.collection.find({"_id": 0}).sort("reps", -1).to_list(None)
         return [UserRep(**rep) for rep in data]
 
     @property
     async def get_all_rep(self) -> list[UserRep]:
-        data = await self.collection.find().to_list()
+        data = await self.collection.find({"_id": 0}).to_list(None)
         return [UserRep(**rep) for rep in data]
 
     @property
     async def get_all_cooldown(self) -> list[UserRep]:
-        data = await self.collection.find().to_list()
+        data = await self.collection.find({"_id": 0}).to_list(None)
         return [UserRep(**rep) for rep in data if rep["cooldown"]]
 
 
@@ -205,12 +205,12 @@ class CollectionDB:
         return collection
 
     async def get_item_collection(self, item: str) -> list[Collection]:
-        data = await self.collection.find({"collection": item}).to_list()
+        data = await self.collection.find({"collection": item}, {"_id": 0}).to_list(None)
         return [Collection(**collection) for collection in data]
 
     @property
     async def get_all_collection(self) -> list[Collection]:
-        data = await self.collection.find().to_list()
+        data = await self.collection.find({"_id": 0}).to_list(None)
         return [Collection(**collection) for collection in data]
 
 
@@ -228,7 +228,7 @@ class GiveawayDB:
         return Giveaway(**data) if data else None
 
     async def get_giveaways(self, guild_id: int) -> list[Giveaway]:
-        data = await self.collection.find({"guild_id": guild_id, "ended": False}).to_list()
+        data = await self.collection.find({"guild_id": guild_id, "ended": False}, {"_id": 0}).to_list(None)
         return [Giveaway(**giveaway) for giveaway in data]
 
     async def giveaway_click(self, message_id: int, user_id: int) -> bool:
@@ -259,19 +259,16 @@ class GiveawayDB:
     @property
     async def giveaway_by_time(self) -> list[Giveaway]:
         time = datetime.datetime.now()
-        data = await self.collection.find({"end_time": {"$gte": time}, "ended": False}).to_list()
+        data = await self.collection.find(
+            {"end_time": {"$lte": time}, "ended": False}, {"_id": 0}
+        ).to_list(None)
         return [Giveaway(**giveaway) for giveaway in data]
 
     @property
     async def giveaway_by_end(self) -> list[Giveaway]:
         data = await self.collection.find(
-            {"end_time": {"$lte": datetime.datetime.utcnow() + datetime.timedelta(days=1)}}
-        ).to_list()
-        return [Giveaway(**giveaway) for giveaway in data]
-
-    @property
-    async def get_all_giveaway(self) -> list[Giveaway]:
-        data = await self.collection.find().to_list()
+            {"end_time": {"$gte": datetime.datetime.utcnow() + datetime.timedelta(days=1)}, "ended": True}, {"_id": 0}
+        ).to_list(None)
         return [Giveaway(**giveaway) for giveaway in data]
 
 
@@ -289,7 +286,7 @@ class ReminderDB:
         return Reminder(**data) if data else None
 
     async def get_reminders(self, user_id: int) -> list[Reminder]:
-        data = await self.collection.find({"user_id": user_id}).to_list()
+        data = await self.collection.find({"user_id": user_id}, {"_id": 0}).to_list(None)
         return [Reminder(**reminder) for reminder in data]
 
     async def delete_reminder(self, message_id: int) -> None:
@@ -297,13 +294,13 @@ class ReminderDB:
 
     @property
     async def get_all_reminder(self) -> list[Reminder]:
-        data = await self.collection.find().to_list()
+        data = await self.collection.find({"_id": 0}).to_list(None)
         return [Reminder(**reminder) for reminder in data]
 
     @property
     async def get_reminder_by_time(self) -> list[Reminder]:
         time = datetime.datetime.now()
-        data = await self.collection.find({"end_time": {"$gte": time}}).to_list()
+        data = await self.collection.find({"end_time": {"$lte": time}}, {"_id": 0}).to_list(None)
         return [Reminder(**reminder) for reminder in data]
 
 

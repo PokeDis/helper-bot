@@ -20,13 +20,16 @@ class GiveawayJoinView(discord.ui.View):
         relative_time = discord.utils.format_dt(data.end_time, style="R")
         full_time = discord.utils.format_dt(data.end_time, style="f")
         embed = discord.Embed(
-            title=f"{data.prize}",
-            description=f"<:bullet:1014583675184230511> Ends: {relative_time} ({full_time})\n"
-            f"<:bullet:1014583675184230511> Hosted by: <@{data.host_id}>\n"
-            f"<:bullet:1014583675184230511> Entries: {len(data.participants)}\n"
-            f"<:bullet:1014583675184230511> Winners: {data.winner_count}\n",
+            title="Giveaway!",
+            description=f"React with 🎉 to enter!\n\n"
+            f"Hosted by: <@{data.host_id}>\n"
+            f"Prize: {data.prize}\n"
+            f"Winners: {data.winner_count}\n"
+            f"Entries: {len(data.participants)}\n"
+            f"Ends at: {relative_time} ({full_time})\n",
             color=discord.Color.blue(),
         )
+        embed.set_footer(text="PokéLore Giveaway")
         embed.timestamp = data.end_time
         return embed
 
@@ -39,13 +42,16 @@ class GiveawayJoinView(discord.ui.View):
         relative_time = discord.utils.format_dt(time, style="R")
         full_time = discord.utils.format_dt(time, style="f")
         embed = discord.Embed(
-            title=f"{data.prize}",
-            description=f"<:bullet:1014583675184230511> Ended: {relative_time} ({full_time})\n"
-            f"<:bullet:1014583675184230511> Hosted by: <@{data.host_id}>\n"
-            f"<:bullet:1014583675184230511> Entries: {len(data.participants)}\n"
-            f"<:bullet:1014583675184230511> Winners: {', '.join(map(lambda x: f'<@!{x}>', data.winners))}\n",
+            title="Giveaway!",
+            description=f"This giveaway has been ended.\n\n"
+            f"Ended: {relative_time} ({full_time})\n"
+            f"Hosted by: <@{data.host_id}>\n"
+            f"Prize: {data.prize}\n"
+            f"Winners: {', '.join(map(lambda x: f'<@!{x}>', data.winners))}\n"
+            f"Entries: {len(data.participants)}\n",
             color=discord.Color.blue(),
         )
+        embed.set_footer(text="PokéLore Giveaway")
         embed.timestamp = time
         return embed
 
