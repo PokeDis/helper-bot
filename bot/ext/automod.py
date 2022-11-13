@@ -78,11 +78,7 @@ class AutoMod(commands.Cog):
     async def on_member_join(self, member: discord.Member) -> None:
         guild_id = member.guild.id
         checker = self._spam_check[guild_id]
-        fastjoin = False
         if checker.is_fast_join(member):
-            fastjoin = True
-
-        if fastjoin:
             embed = discord.Embed(title=f"High-Speed Join {member}", color=discord.Color.red())
             embed.set_thumbnail(url=member.display_avatar)
             embed.timestamp = discord.utils.utcnow()
