@@ -1,6 +1,7 @@
 from .giveaway import GiveawayJoinView
-from .ticket import InsideTicketView, TicketCloseView, TicketCreateView
 from .roles import RoleView
+from .selfroles import RoleMenu
+from .ticket import InsideTicketView, TicketCloseView, TicketCreateView
 
 __all__: tuple[str, ...] = (
     "GiveawayJoinView",
@@ -8,4 +9,5 @@ __all__: tuple[str, ...] = (
     "TicketCreateView",
     "InsideTicketView",
     "RoleView",
+    "RoleMenu",
 )

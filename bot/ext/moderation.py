@@ -23,7 +23,7 @@ class Moderation(commands.Cog):
         data = await self.bot.db.warns.get_all_warns
         for warn in data:
             for record in warn.logs:
-                if record.time + datetime.timedelta(days=30) <= datetime.datetime.utcnow():
+                if (datetime.datetime.utcnow() - record.time).days >= 30:
                     await self.bot.db.warns.remove_warn(warn.guild_id, warn.user_id, warn.logs.index(record))
 
     @clean_warns.before_loop

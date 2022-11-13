@@ -7,7 +7,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from bot.core.helper import POKEMONS
-from bot.core.views import GiveawayJoinView, InsideTicketView, TicketCloseView, TicketCreateView, RoleView
+from bot.core.views import GiveawayJoinView, InsideTicketView, RoleView, TicketCloseView, TicketCreateView
 from bot.database import Mongo
 
 LOGGER = logging.getLogger(__name__)

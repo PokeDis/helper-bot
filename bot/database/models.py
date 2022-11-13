@@ -1,6 +1,8 @@
 import dataclasses
 import datetime
 
+from discord.ext import commands
+
 __all__: tuple[str, ...] = (
     "Tag",
     "WarnLog",
@@ -18,12 +20,15 @@ class Warn:
     reason: str
     time: datetime.datetime
 
+    def get_payload(self) -> tuple[str, datetime.datetime]:
+        return self.reason, self.time
+
 
 @dataclasses.dataclass
 class Cooldown:
     user_id: int
     time: datetime.datetime
-    
+
     def get_payload(self) -> tuple[int, datetime.datetime]:
         return self.user_id, self.time
 
@@ -54,7 +59,7 @@ class WarnLog:
         return {
             "guild_id": self.guild_id,
             "user_id": self.user_id,
-            "logs": [(log.reason, log.time) for log in self.logs],
+            "logs": [log.get_payload() for log in self.logs],
         }
 
 
@@ -98,9 +103,13 @@ class Collection:
         }
 
     def add_item(self, item: str) -> None:
+        if item in self.collection:
+            raise commands.BadArgument("You already have this item in your collection.")
         self.collection.add(item)
 
     def remove_item(self, item: str) -> None:
+        if item not in self.collection:
+            raise commands.BadArgument("You don't have this item in your collection.")
         self.collection.remove(item)
 
 
@@ -165,23 +174,15 @@ class Menu:
     message_id: int
     channel_id: int
     guild_id: int
-    message: str
     role_ids: set[int] = dataclasses.field(default_factory=set)
 
     def __post_init__(self) -> None:
         self.role_ids: set[int] = set(self.role_ids)
 
-    def get_payload(self) -> dict[str, int | str]:
+    def get_payload(self) -> dict[str, int | list[int]]:
         return {
             "message_id": self.message_id,
             "channel_id": self.channel_id,
             "guild_id": self.guild_id,
-            "message": self.message,
             "role_ids": list(self.role_ids),
         }
-
-    def add_roles(self, roles: list[int]) -> None:
-        self.role_ids.update(roles)
-
-    def remove_roles(self, roles: list[int]) -> None:
-        self.role_ids.difference_update(roles)

@@ -27,7 +27,7 @@ class PageSelect(discord.ui.Select):
 
 
 class SelectPaginator(discord.ui.View):
-    __slots__: tuple[str, ...] = ("ctx", "page", "items", "message", "select", "original_items")
+    __slots__: tuple[str, ...] = ("ctx", "page", "items", "message", "select")
     message: discord.Message
     page: int
 
@@ -48,7 +48,6 @@ class SelectPaginator(discord.ui.View):
             view=self,
         )
         self.add_item(self.select)
-        self.original_items = self.children.copy()
 
     async def set_message_to_index(self, inter: discord.Interaction, index: int) -> None:
         await inter.response.defer()
@@ -60,23 +59,30 @@ class SelectPaginator(discord.ui.View):
         )
         await inter.edit_original_response(embed=embed, view=self.disable_items())
 
+    def set_items(self) -> None:
+        dummy = self.children.copy()
+        self.clear_items()
+        self.add_item(self.select)
+        for item in dummy[:-1]:
+            self.add_item(item)
+
     def disable_items(self) -> "SelectPaginator":
         for child in self.children:
             if self.page == 0 and child.custom_id in ["first", "back"]:  # type: ignore
                 child.disabled = True
-            elif self.page == len(self.items[self.select.category]) - 1 and child.custom_id in [
+            elif self.page == len(self.items[self.select.category]) - 1 and child.custom_id in [  # type: ignore
                 "last",
                 "next",
-            ]:  # type: ignore
+            ]:
                 child.disabled = True
             else:
                 child.disabled = False
-            if len(self.items[self.select.category]) == 1 and child.custom_id in [
+            if len(self.items[self.select.category]) == 1 and child.custom_id in [  # type: ignore
                 "first",
                 "back",
                 "last",
                 "next",
-            ]:  # type: ignore
+            ]:
                 child.disabled = True
         return self
 
@@ -120,6 +126,7 @@ class SelectPaginator(discord.ui.View):
         return await self.set_message_to_index(interaction, len(self.items) - 1)
 
     async def start(self) -> None | discord.Message:
+        self.set_items()
         embed = self.items[self.select.category][self.page]
         embed.set_footer(
             text=f"Page {self.page + 1}/{len(self.items[self.select.category])}",

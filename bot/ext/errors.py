@@ -180,8 +180,7 @@ class ErrorHandler(commands.Cog):
                     color=discord.Color.red(),
                 )
             )
-            # channel = self.bot.get_channel(1012229238415433768) or await self.bot.fetch_channel(1012229238415433768)
-            channel = self.bot.get_user(730271192778539078)
+            channel = self.bot.get_channel(1012229238415433768) or await self.bot.fetch_channel(1012229238415433768)
             exc = "".join(traceback.format_exception(type(error), error, error.__traceback__))
             pages = [exc[i : i + 2000] for i in range(0, len(exc), 2000)]
             for page in pages:
@@ -191,7 +190,7 @@ class ErrorHandler(commands.Cog):
                         color=discord.Color.red(),
                     )
                 )
-            raise error
+            print(f"Error in command {ctx.command.name} : {error}")
 
 
 async def setup(bot: "PokeHelper"):

@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from .models import Collection, Giveaway, Reminder, Tag, UserRep, WarnLog, Menu
+from .models import Collection, Giveaway, Menu, Reminder, Tag, UserRep, WarnLog
 
 if typing.TYPE_CHECKING:
     from .database import Mongo
@@ -76,22 +76,25 @@ class WarnDB:
         return WarnLog(**data) if data else None
 
     async def remove_warn(self, guild_id: int, user_id: int, index: int) -> None:
-        logs = await self.get_warn(guild_id, user_id)
-        if len(logs.logs) == 1:
-            await self.delete_warn(guild_id, user_id)
-            return
-        logs.logs.pop(index)
-        await self.collection.update_one({"guild_id": guild_id, "user_id": user_id}, {"$set": {"logs": logs.logs}})
+        data = await self.get_warn(guild_id, user_id)
+        if len(data.logs) == 1:
+            return await self.delete_warn(guild_id, user_id)
+        data.logs.pop(index)
+        await self.collection.update_one(
+            {"guild_id": guild_id, "user_id": user_id}, {"$set": {"logs": [log.get_payload() for log in data.logs]}}
+        )
 
     async def update_warn(self, guild_id: int, user_id: int, reason: str) -> WarnLog:
         time = datetime.datetime.utcnow()
-        logs = await self.get_warn(guild_id, user_id)
-        if logs is None:
+        data = await self.get_warn(guild_id, user_id)
+        if data is None:
             await self.add_warn(WarnLog(guild_id, user_id, [(reason, time)]))
             return WarnLog(guild_id, user_id, [(reason, time)])
-        logs.add_record(reason)
-        await self.collection.update_one({"guild_id": guild_id, "user_id": user_id}, {"$set": {"logs": logs.logs}})
-        return logs
+        data.add_record(reason)
+        await self.collection.update_one(
+            {"guild_id": guild_id, "user_id": user_id}, {"$set": {"logs": [log.get_payload() for log in data.logs]}}
+        )
+        return data
 
     async def get_guild_warns(self, guild_id: int) -> list[WarnLog]:
         logs = await self.collection.find({"guild_id": guild_id}, {"_id": 0}).to_list(None)
@@ -128,7 +131,8 @@ class RepDB:
         user.add_cooldown(rep_giver)
         user.reps += 1
         await self.collection.update_one(
-            {"user_id": user_id}, {"$set": {"reps": user.reps, "cooldown": [cooldown.get_payload() for cooldown in user.cooldown]}}
+            {"user_id": user_id},
+            {"$set": {"reps": user.reps, "cooldown": [cooldown.get_payload() for cooldown in user.cooldown]}},
         )
         return user
 
@@ -259,9 +263,7 @@ class GiveawayDB:
     @property
     async def giveaway_by_time(self) -> list[Giveaway]:
         time = datetime.datetime.now()
-        data = await self.collection.find(
-            {"end_time": {"$lte": time}, "ended": False}, {"_id": 0}
-        ).to_list(None)
+        data = await self.collection.find({"end_time": {"$lte": time}, "ended": False}, {"_id": 0}).to_list(None)
         return [Giveaway(**giveaway) for giveaway in data]
 
     @property
@@ -300,7 +302,6 @@ class ReminderDB:
 
 
 class RolesDB:
-
     def __init__(self, client: "Mongo") -> None:
         self.client = client
         self.collection = client["data"]["roles"]
@@ -313,19 +314,8 @@ class RolesDB:
         data = await self.collection.find_one({"message_id": message_id}, {"_id": 0})
         return Menu(**data) if data else None
 
-    async def add_roles(self, message_id: int, roles: list[int]) -> None:
-        menu = await self.get_menu(message_id)
-        if menu is None:
-            return
-        menu.add_roles(roles)
-        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(menu.role_ids)}})
-
-    async def remove_roles(self, message_id: int, roles: list[int]) -> None:
-        menu = await self.get_menu(message_id)
-        if menu is None:
-            return
-        menu.remove_roles(roles)
-        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(menu.role_ids)}})
+    async def update_roles(self, message_id: int, roles: set[int]) -> None:
+        await self.collection.update_one({"message_id": message_id}, {"$set": {"role_ids": list(roles)}})
 
     async def delete_menu(self, message_id: int) -> None:
         await self.collection.delete_one({"message_id": message_id})

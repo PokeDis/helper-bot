@@ -46,6 +46,13 @@ class Collection(commands.Cog):
     async def paginate(
         member: discord.Member, ctx: commands.Context, data: "CollectionModel"
     ) -> None | discord.Message:
+        if not data.collection:
+            return await ctx.send(
+                embed=discord.Embed(
+                    description=f"<:no:1001136828738453514> {member.mention} has no collectibles.",
+                    color=discord.Color.red(),
+                )
+            )
         sr_num = [f"{i}. {j}" for i, j in enumerate(data.collection, start=1)]
         chunks = list(discord.utils.as_chunks(sr_num, 10))
         embeds = []
@@ -81,7 +88,8 @@ class Collection(commands.Cog):
             return
         await self.bot.db.collections.add_item(ctx.author.id, self.format_name(pokemon))
         embed2 = discord.Embed(
-            description=f"<:tick:1001136782508826777> Successfully Added `{self.format_name(pokemon)}` to your collectibles.",
+            description=f"<:tick:1001136782508826777> Successfully Added"
+            f" `{self.format_name(pokemon)}` to your collectibles.",
             color=discord.Color.green(),
         )
         embed2.timestamp = discord.utils.utcnow()
@@ -120,7 +128,7 @@ class Collection(commands.Cog):
         records = await self.bot.db.collections.get_item_collection(self.format_name(pokemon))
         if not records:
             embed = discord.Embed(
-                description=f"<:no:1001136828738453514> No one has collected `{self.format_name(pokemon)}`",
+                description=f"<:no:1001136828738453514> No one is collecting `{self.format_name(pokemon)}`",
                 color=discord.Color.red(),
             )
             return await ctx.send(embed=embed)
