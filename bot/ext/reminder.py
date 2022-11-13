@@ -43,7 +43,7 @@ class Reminder(commands.Cog):
             )
             msg = await ctx.send(embed=embed)
             await self.bot.db.reminders.add_reminder(
-                ReminderModel(msg.id, datetime.datetime.now() + duration, ctx.channel.id, ctx.guild.id, ctx.author.id)
+                ReminderModel(msg.id, datetime.datetime.now() + duration, ctx.guild.id, ctx.channel.id, ctx.author.id)
             )
             await asyncio.sleep(duration.total_seconds())
             data = await self.bot.db.reminders.get_reminder(msg.id)
@@ -82,7 +82,7 @@ class Reminder(commands.Cog):
     @reminder.command(name="all", help="Get a list of all your reminders")
     @commands.guild_only()
     async def _all(self, ctx: commands.Context) -> discord.Message | None:
-        data = await self.bot.db.reminders.get_reminders(ctx.author.id)
+        data = await self.bot.db.reminders.get_all_reminder(ctx.author.id)
         if not data:
             embed = discord.Embed(
                 description=f"<:tick:1001136782508826777> You have no reminders",
@@ -114,16 +114,12 @@ class Reminder(commands.Cog):
     @tasks.loop(seconds=10)
     async def check_reminders(self) -> None:
         reminders = await self.bot.db.reminders.get_reminder_by_time
-        print(reminders)
         for reminder in reminders:
             channel = self.bot.get_channel(reminder.channel_id) or await self.bot.fetch_channel(reminder.channel_id)
             if channel is None:
-                print("fuck")
                 continue
             message = await channel.fetch_message(reminder.message_id)
-            print("3")
             if message is None:
-                print("ded")
                 continue
             embed = discord.Embed(
                 description=f"<:tick:1001136782508826777> You asked me to remind you about"
