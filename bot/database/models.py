@@ -23,6 +23,9 @@ class Warn:
 class Cooldown:
     user_id: int
     time: datetime.datetime
+    
+    def get_payload(self) -> tuple[int, datetime.datetime]:
+        return self.user_id, self.time
 
 
 @dataclasses.dataclass
@@ -72,7 +75,12 @@ class UserRep:
         }
 
     def add_cooldown(self, user_id: int) -> None:
+        for cd in self.cooldown:
+            if user_id == cd.user_id:
+                self.cooldown[self.cooldown.index(cd)] = Cooldown(user_id, datetime.datetime.utcnow())
+                return
         self.cooldown.append(Cooldown(user_id, datetime.datetime.utcnow()))
+        return
 
 
 @dataclasses.dataclass

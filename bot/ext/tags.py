@@ -40,7 +40,7 @@ class Tags(commands.Cog):
         sr_num = [f"{i}. {j}" for i, j in enumerate(matches, start=1)]
         chunks = list(discord.utils.as_chunks(sr_num, 10))
         embeds = []
-        for i, j in enumerate(chunks):
+        for j in chunks:
             embed = discord.Embed(description="\n".join(j), color=discord.Color.blue())
             embed.set_author(
                 name=f"Tags matching {name}",
@@ -85,22 +85,30 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def search(self, ctx: commands.Context, name: str) -> None:
         tags = await self.bot.db.tags.get_all_tags
-        matches = [i for i in tags if i.title.lower() == name.lower()]
+        matches = [i.title for i in tags if i.title.lower() == name.lower()]
         if matches:
             await self.paginate(matches, ctx, name)
-        else:
-            await ctx.send(
-                embed=discord.Embed(
-                    description=f"<:no:1001136828738453514> No tags matching {name} found.",
-                    color=discord.Color.red(),
-                )
+            return
+        await ctx.send(
+            embed=discord.Embed(
+                description=f"<:no:1001136828738453514> No tags matching {name} found.",
+                color=discord.Color.red(),
             )
+        )
 
     @tag.command(help="Lists all tags")
     @commands.guild_only()
     async def all(self, ctx: commands.Context) -> None:
         tags = await self.bot.db.tags.get_all_tags
-        await self.paginate(tags, ctx)
+        if tags:
+            await self.paginate([i.title for i in tags], ctx)
+            return
+        await ctx.send(
+            embed=discord.Embed(
+                description=f"<:no:1001136828738453514> No tags published yet.",
+                color=discord.Color.red(),
+            )
+        )
 
     @tag.command(
         help="Lists all tags that belong to you or someone else",
@@ -112,7 +120,7 @@ class Tags(commands.Cog):
         member = member or ctx.author
         tags = await self.bot.db.tags.get_user_tags(member.id)
         if tags:
-            await self.paginate(tags, ctx, f"{member.display_name}'s tags")
+            await self.paginate([i.title for i in tags], ctx, f"{member.display_name}'s tags")
         else:
             await ctx.send(
                 embed=discord.Embed(

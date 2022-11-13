@@ -48,7 +48,7 @@ class SelfRoles(commands.Cog):
         self, ctx: commands.Context, *, message: str
     ) -> None:
         warning = await ctx.send("**DO NOT DELETE THIS MESSAGE.\nPLEASE COPY THIS MESSAGE'S ID AND ADD ROLES AFTER THIS**")
-        return await self.bot.db.roles.add_menu(Menu(warning.id, ctx.guild.id, ctx.channel.id, message))
+        return await self.bot.db.roles.add_menu(Menu(warning.id, ctx.channel.id, ctx.guild.id, message))
 
     @_menu.command(help="Adds a role to role menu")
     @commands.has_permissions(manage_guild=True)

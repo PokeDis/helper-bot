@@ -34,14 +34,14 @@ class TagDB:
         await self.collection.insert_one(data.get_payload())
 
     async def delete_tag(self, name: str) -> None:
-        await self.collection.delete_one({"tag": name})
+        await self.collection.delete_one({"title": name})
 
     async def get_tag(self, tag: str) -> Tag | None:
-        data = await self.collection.find_one({"tag": tag}, {"_id": 0})
+        data = await self.collection.find_one({"title": tag}, {"_id": 0})
         return Tag(**data) if data else None
 
     async def update_tag(self, name: str, content: str) -> None:
-        await self.collection.update_one({"tag": name}, {"$set": {"content": content}})
+        await self.collection.update_one({"title": name}, {"$set": {"content": content}})
 
     async def get_user_tags(self, user_id: int) -> list[Tag]:
         tags = await self.collection.find({"user_id": user_id}, {"_id": 0}).to_list(None)
@@ -49,7 +49,7 @@ class TagDB:
 
     @property
     async def get_all_tags(self) -> list[Tag]:
-        tags = await self.collection.find({"_id": 0}).to_list(None)
+        tags = await self.collection.find({}, {"_id": 0}).to_list(None)
         return [Tag(**tag) for tag in tags]
 
 
@@ -99,7 +99,7 @@ class WarnDB:
 
     @property
     async def get_all_warns(self) -> list[WarnLog]:
-        logs = await self.collection.find({"_id": 0}).to_list(None)
+        logs = await self.collection.find({}, {"_id": 0}).to_list(None)
         return [WarnLog(**log) for log in logs]
 
 
@@ -128,7 +128,7 @@ class RepDB:
         user.add_cooldown(rep_giver)
         user.reps += 1
         await self.collection.update_one(
-            {"user_id": user_id}, {"$set": {"reps": user.reps, "cooldown": user.cooldown}}
+            {"user_id": user_id}, {"$set": {"reps": user.reps, "cooldown": [cooldown.get_payload() for cooldown in user.cooldown]}}
         )
         return user
 
@@ -156,17 +156,17 @@ class RepDB:
 
     @property
     async def leaderboard(self) -> list[UserRep]:
-        data = await self.collection.find({"_id": 0}).sort("reps", -1).to_list(None)
+        data = await self.collection.find({}, {"_id": 0}).sort("reps", -1).to_list(None)
         return [UserRep(**rep) for rep in data]
 
     @property
     async def get_all_rep(self) -> list[UserRep]:
-        data = await self.collection.find({"_id": 0}).to_list(None)
+        data = await self.collection.find({}, {"_id": 0}).to_list(None)
         return [UserRep(**rep) for rep in data]
 
     @property
     async def get_all_cooldown(self) -> list[UserRep]:
-        data = await self.collection.find({"_id": 0}).to_list(None)
+        data = await self.collection.find({}, {"_id": 0}).to_list(None)
         return [UserRep(**rep) for rep in data if rep["cooldown"]]
 
 
@@ -210,7 +210,7 @@ class CollectionDB:
 
     @property
     async def get_all_collection(self) -> list[Collection]:
-        data = await self.collection.find({"_id": 0}).to_list(None)
+        data = await self.collection.find({}, {"_id": 0}).to_list(None)
         return [Collection(**collection) for collection in data]
 
 
@@ -285,17 +285,12 @@ class ReminderDB:
         data = await self.collection.find_one({"message_id": message_id}, {"_id": 0})
         return Reminder(**data) if data else None
 
-    async def get_reminders(self, user_id: int) -> list[Reminder]:
-        data = await self.collection.find({"user_id": user_id}, {"_id": 0}).to_list(None)
+    async def get_all_reminder(self, user_id: int) -> list[Reminder]:
+        data = await self.collection.find({}, {"user_id": user_id}, {"_id": 0}).to_list(None)
         return [Reminder(**reminder) for reminder in data]
 
     async def delete_reminder(self, message_id: int) -> None:
         await self.collection.delete_one({"message_id": message_id})
-
-    @property
-    async def get_all_reminder(self) -> list[Reminder]:
-        data = await self.collection.find({"_id": 0}).to_list(None)
-        return [Reminder(**reminder) for reminder in data]
 
     @property
     async def get_reminder_by_time(self) -> list[Reminder]:
