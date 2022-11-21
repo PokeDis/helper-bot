@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from bot.core.helper import POKEMONS
+from bot.core.helper import POKEMONS, EMOJIS
 from bot.core.views import GiveawayJoinView, InsideTicketView, RoleView, TicketCloseView, TicketCreateView
 from bot.database import Mongo
 
@@ -32,6 +32,22 @@ class PokeHelper(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or("?"), intents=discord.Intents.all(), case_insensitive=True
         )
+
+    def emoji(
+        self,
+        name: str,
+        *,
+        animated: bool = False,
+        shiny: bool = False,
+        string: bool = False,
+    ) -> discord.Emoji | str:
+        if isinstance(name, int):
+            return self.get_emoji(name)
+        name = name.replace("-", "").replace(" ", "").lower()
+        name = (f"a:{name}" + "_sh" if shiny else f"a:{name}") if animated else f":{name}"
+        read = EMOJIS.get(name, 998459023613493289)
+        read_n = "<:unknown:998459023613493289>" if read == 998459023613493289 else f"<{name}:{read}>"
+        return self.get_emoji(EMOJIS.get(name, 998459023613493289)) if not string else read_n
 
     def add_views(self, *views: discord.ui.View) -> None:
         for view in views:

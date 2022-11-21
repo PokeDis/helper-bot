@@ -22,6 +22,10 @@ class Collection(commands.Cog):
     def format_name(name: str) -> str:
         return name.strip().lower().replace(" ", "-")
 
+    @staticmethod
+    def display_name(name: str) -> str:
+        return name.replace("-", " ").title()
+
     async def check_mon(self, ctx: commands.Context, mon: str) -> bool:
         if (name := self.format_name(mon)) not in self.bot.pokemons:
             possible = difflib.get_close_matches(name, self.bot.pokemons, n=1)
@@ -42,9 +46,8 @@ class Collection(commands.Cog):
                 return False
         return True
 
-    @staticmethod
     async def paginate(
-        member: discord.Member, ctx: commands.Context, data: "CollectionModel"
+        self, member: discord.Member, ctx: commands.Context, data: "CollectionModel"
     ) -> None | discord.Message:
         if not data.collection:
             return await ctx.send(
@@ -53,10 +56,10 @@ class Collection(commands.Cog):
                     color=discord.Color.red(),
                 )
             )
-        sr_num = [f"{i}. {j}" for i, j in enumerate(data.collection, start=1)]
+        sr_num = [f"➤ {self.bot.emoji(j, animated=True)} **{j.title()}**" for j in data.collection]
         chunks = list(discord.utils.as_chunks(sr_num, 10))
         embeds = []
-        for i, j in enumerate(chunks):
+        for j in chunks:
             embed = discord.Embed(description="\n".join(j), color=discord.Color.blue())
             embed.set_author(
                 name=f"{member.display_name}'s collection",
@@ -89,7 +92,7 @@ class Collection(commands.Cog):
         await self.bot.db.collections.add_item(ctx.author.id, self.format_name(pokemon))
         embed2 = discord.Embed(
             description=f"<:tick:1001136782508826777> Successfully Added"
-            f" `{self.format_name(pokemon)}` to your collectibles.",
+            f"{self.bot.emoji(pokemon, animated=True)} `{self.display_name(pokemon)}` to your collectibles.",
             color=discord.Color.green(),
         )
         embed2.timestamp = discord.utils.utcnow()
@@ -103,7 +106,7 @@ class Collection(commands.Cog):
         await self.bot.db.collections.remove_item(ctx.author.id, self.format_name(pokemon))
         embed2 = discord.Embed(
             description=f"<:tick:1001136782508826777> Successfully removed"
-            f" `{self.format_name(pokemon)}` from your collectibles.",
+            f"{self.bot.emoji(pokemon, animated=True)} `{self.display_name(pokemon)}` from your collectibles.",
             color=discord.Color.green(),
         )
         embed2.timestamp = discord.utils.utcnow()
@@ -128,7 +131,7 @@ class Collection(commands.Cog):
         records = await self.bot.db.collections.get_item_collection(self.format_name(pokemon))
         if not records:
             embed = discord.Embed(
-                description=f"<:no:1001136828738453514> No one is collecting `{self.format_name(pokemon)}`",
+                description=f"<:no:1001136828738453514> No one is collecting {self.bot.emoji(pokemon, animated=True)} `{self.display_name(pokemon)}`",
                 color=discord.Color.red(),
             )
             return await ctx.send(embed=embed)
@@ -137,7 +140,7 @@ class Collection(commands.Cog):
         chunks = list(discord.utils.as_chunks(sr_no, 10))
         for i, j in enumerate(chunks):
             embed = discord.Embed(
-                title=f"{self.format_name(pokemon)} Collectors",
+                title=f"{self.display_name(pokemon)} Collectors",
                 description="\n".join(j),
                 color=discord.Color.blue(),
             )
