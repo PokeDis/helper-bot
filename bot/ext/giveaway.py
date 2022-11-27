@@ -29,17 +29,17 @@ class Giveaway(commands.Cog):
             await self.bot.db.giveaways.update_bool(message.id)
             if len(data.participants) >= data.winner_count:
                 data.winners = random.sample(data.participants, k=data.winner_count)
+                await self.bot.db.giveaways.update_winners(message.id, list(data.winners))
+                end_embed = await GiveawayJoinView.make_after_embed(self.bot, message.id)
+                end_embed.set_thumbnail(url=message.guild.icon)
                 await message.reply(
                     "Congratulations "
                     + ", ".join(map(lambda x: f"<@!{x}>", data.winners))
                     + f"! You won **{data.prize}**"
                 )
-                await self.bot.db.giveaways.update_winners(message.id, list(data.winners))
-                end_embed = await GiveawayJoinView.make_after_embed(self.bot, message.id)
-                end_embed.set_thumbnail(url=message.guild.icon.url)
                 return await message.edit(embed=end_embed, view=None)
             a_embed = discord.Embed(
-                description="<:no:1001136828738453514> I couldn't determine a winner for that giveaway...\n"
+                description="<:no:1001136828738453514> **I couldn't determine a winner for that giveaway...**\n"
                 "**Reason:** Less number of people joined than winners to be declared.",
                 color=discord.Color.red(),
             )
@@ -55,13 +55,13 @@ class Giveaway(commands.Cog):
         end_at = discord.utils.format_dt(data.end_time, style="R")
         embed.add_field(
             name=f"Giveaway ID: {data.message_id}",
-            value=f"<:bullet:1014583675184230511> Ends at: {end_at}\n"
-            f"<:bullet:1014583675184230511> Prize: {data.prize}\n"
-            f"<:bullet:1014583675184230511> Hosted by: <@{data.host_id}>\n"
-            f"<:bullet:1014583675184230511> In: <#{data.channel_id}> [Click here to visit!]"
+            value=f"<:bullet:1014583675184230511> **Ends at** ◆ {end_at}\n"
+            f"<:bullet:1014583675184230511> **Prize** ◆ *{data.prize}*\n"
+            f"<:bullet:1014583675184230511> **Hosted by** ◆ <@{data.host_id}>\n"
+            f"<:bullet:1014583675184230511> **In** ◆ <#{data.channel_id}> [Click here to visit!]"
             f"(https://discord.com/channels/{data.guild_id}/{data.channel_id}/{data.message_id})\n"
-            f"<:bullet:1014583675184230511> Entries: {len(data.participants)}\n"
-            f"<:bullet:1014583675184230511> Winners: {data.winner_count}\n",
+            f"<:bullet:1014583675184230511> **Entries** ◆ `{len(data.participants)}`\n"
+            f"<:bullet:1014583675184230511> **Winners** ◆ `{data.winner_count}`\n",
             inline=False,
         )
         embed.timestamp = data.end_time
@@ -74,17 +74,22 @@ class Giveaway(commands.Cog):
         if ctx.invoked_subcommand is None:
             data = await self.bot.db.giveaways.get_giveaways(ctx.guild.id)
             if not data:
-                return await ctx.send("No giveaways are currently active!")
+                return await ctx.send(
+                    embed=discord.Embed(
+                        title="<:no:1001136828738453514> No active giveaways found!",
+                        color=discord.Color.red(),
+                    )
+                )
             embeds = []
             for giveaway in data:
                 embed = discord.Embed(
-                    title=f"{ctx.guild.name}'s Active Giveaways",
-                    description=f"React with 🎉 to enter!\n\n",
+                    description=f"**React with 🎉 to enter!**\n\n",
                     color=discord.Color.blue(),
                 )
                 embed.set_footer(text=f"{len(data)} active giveaways")
                 self.format_giveaway_embed(embed, giveaway)
-                embed.set_thumbnail(url=ctx.guild.icon)
+                embed.set_thumbnail(url=self.bot.user.display_avatar)
+                embed.set_author(name=f"{ctx.guild.name}'s Active Giveaways", icon_url=ctx.guild.icon)
                 embeds.append(embed)
             return await ClassicPaginator(ctx, embeds).start()
 
@@ -103,18 +108,19 @@ class Giveaway(commands.Cog):
         if duration.total_seconds() <= 1209600 and winners >= 1:
             view = GiveawayJoinView(self.bot)
             embed = discord.Embed(
-                title="Giveaway!",
-                description=f"React with 🎉 to enter!\n\n"
-                f"Hosted by: {hoster.mention}\n"
-                f"Prize: {prize}\n"
-                f"Winners: {winners}\n"
-                f"Entries: 0\n"
-                f"Ends at: {discord.utils.format_dt(datetime.datetime.now() + duration, style='R')} ({discord.utils.format_dt(datetime.datetime.now() + duration, style='f')})",
-                color=discord.Color.blue(),
+                description=f"*React with 🎉 to enter!*\n\n"
+                f"<:bullet:1014583675184230511> **Hosted by** ◆ {hoster.mention}\n"
+                f"<:bullet:1014583675184230511> **Prize** ◆ *{prize}*\n"
+                f"<:bullet:1014583675184230511> **Winners** ◆ `{winners}`\n"
+                f"<:bullet:1014583675184230511> **Entries** ◆ `0`\n"
+                f"<:bullet:1014583675184230511> **Ends at** ◆ "
+                f"{discord.utils.format_dt(datetime.datetime.now() + duration, style='R')}"
+                f" 『{discord.utils.format_dt(datetime.datetime.now() + duration, style='f')}』",
+                color=discord.Color.random(),
             )
-            embed.set_footer(text="PokéLore Giveaway")
             embed.timestamp = datetime.datetime.now() + duration
-            embed.set_thumbnail(url=ctx.guild.icon)
+            embed.set_thumbnail(url=self.bot.user.display_avatar)
+            embed.set_author(name=f"{ctx.guild.name}'s Giveaway", icon_url=ctx.guild.icon)
             message = await ctx.send(embed=embed, view=view)
             await self.bot.db.giveaways.giveaway_start(
                 GiveawayModel(
@@ -144,14 +150,19 @@ class Giveaway(commands.Cog):
     async def end(self, ctx: commands.Context, message_id: int) -> discord.Message | None:
         data = await self.bot.db.giveaways.get_giveaway(message_id)
         if data is None:
-            return await ctx.reply("That giveaway doesn't exist!")
+            return await ctx.reply(
+                embed=discord.Embed(
+                    title="<:no:1001136828738453514> No giveaway found with that ID!",
+                    color=discord.Color.red(),
+                )
+            )
         if not data.ended:
             channel = self.bot.get_channel(data.channel_id) or await self.bot.fetch_channel(data.channel_id)
             message = await channel.fetch_message(data.message_id)
             return await self.end_giveaway(message, data)
         else:
             b_embed = discord.Embed(
-                description="<:no:1001136828738453514> I couldn't determine a winner for that giveaway...\n"
+                description="<:no:1001136828738453514> **I couldn't determine a winner for that giveaway...**\n"
                 "**Reason:** Giveaway might already have been expired! Please re-check `message_id`.",
                 color=discord.Color.red(),
             )
@@ -163,20 +174,33 @@ class Giveaway(commands.Cog):
     async def reroll(self, ctx: commands.Context, message_id: int) -> None | discord.Message:
         data = await self.bot.db.giveaways.get_giveaway(message_id)
         if data is None:
-            return await ctx.reply("That giveaway doesn't exist!")
-        if data.ended:
-            return await ctx.send(
-                f"Congratulations <@!{random.choice(list(data.participants))}>!"
-                f" You are the new winner of **{data.prize}**"
+            return await ctx.reply(
+                embed=discord.Embed(
+                    title="<:no:1001136828738453514> No giveaway found with that ID!",
+                    color=discord.Color.red(),
+                )
             )
+        channel = self.bot.get_channel(data.channel_id) or await self.bot.fetch_channel(data.channel_id)
+        message = await channel.fetch_message(data.message_id)
+        if data.ended:
+            left = [i for i in data.participants if i not in data.winners]
+            if not left:
+                return await ctx.send(
+                    embed=discord.Embed(
+                        title="<:no:1001136828738453514> No participants left to re-roll!",
+                        color=discord.Color.red(),
+                    )
+                )
+            winner = random.choice(left)
+            return await message.reply(content=f"🎉 Congratulations {winner.mention}! You won **{data.prize}**!")
         embed = discord.Embed(
-            description="<:no:1001136828738453514> I couldn't determine a winner for that giveaway...\n"
+            description="<:no:1001136828738453514> **I couldn't determine a winner for that giveaway...**\n"
             "**Reason:** Giveaway might already have been expired! Please re-check `message_id`.",
             color=discord.Color.red(),
         )
         await ctx.send(embed=embed)
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=60)
     async def update_giveaway(self) -> None:
         records = await self.bot.db.giveaways.giveaway_by_time
         for record in records:

@@ -176,7 +176,7 @@ class ErrorHandler(commands.Cog):
             await ctx.send(
                 embed=discord.Embed(
                     description=f"<:no:1001136828738453514> **An unexpected error occurred!"
-                    f" Reporting this to my developer...**",
+                    f" Reporting this to my developer.**",
                     color=discord.Color.red(),
                 )
             )

@@ -36,8 +36,8 @@ class Tags(commands.Cog):
 
     @staticmethod
     async def paginate(matches: list, ctx: commands.Context, name: str | None = None) -> None | discord.Message:
-        name = name or "All tags"
-        sr_num = [f"{i}. {j}" for i, j in enumerate(matches, start=1)]
+        name = name or "All"
+        sr_num = [f"**{i}〉** {j}" for i, j in enumerate(matches, start=1)]
         chunks = list(discord.utils.as_chunks(sr_num, 10))
         embeds = []
         for j in chunks:
@@ -60,7 +60,7 @@ class Tags(commands.Cog):
             tags = await self.bot.db.tags.get_all_tags
             matches = difflib.get_close_matches(name, [tag.title for tag in tags])
             if matches:
-                sr_num = "\n".join([f"{i}. {j}" for i, j in enumerate(matches, start=1)])
+                sr_num = "\n".join([f"**{i}〉** {j}" for i, j in enumerate(matches, start=1)])
                 description = f"<:no:1001136828738453514> No such tag found.\nDid you mean...\n{sr_num}"
                 embed = discord.Embed(
                     description=description,
@@ -76,7 +76,7 @@ class Tags(commands.Cog):
                 )
         else:
             user = self.bot.get_user(tag_data.user_id) or await self.bot.fetch_user(tag_data.user_id)
-            embed = discord.Embed(description=tag_data.content)
+            embed = discord.Embed(description=tag_data.content, color=discord.Color.random())
             embed.set_author(name=tag_data.title, icon_url=user.display_avatar)
             embed.set_thumbnail(url=self.bot.user.display_avatar)
             await ctx.send(embed=embed)

@@ -27,9 +27,9 @@ class Reputation(commands.Cog):
             embed.set_author(name=f"{member.name}", icon_url=member.display_avatar)
             rep_data = await self.bot.db.rep.get_rep(member.id)
             if rep_data is None:
-                embed.add_field(name="Reputation", value="0")
+                embed.add_field(name="Reputation", value="0 {self.bot.get_emoji(1046438031130886276)}")
                 return await ctx.send(embed=embed)
-            embed.add_field(name="Reputation", value=f"{rep_data.reps}")
+            embed.add_field(name="Reputation", value=f"{rep_data.reps} {self.bot.get_emoji(1046438031130886276)}")
             return await ctx.send(embed=embed)
         return None
 
@@ -51,17 +51,22 @@ class Reputation(commands.Cog):
         count = 0
         for chunk in chunks:
             embed = discord.Embed(
-                color=discord.Color.blue(), description=f"**Your rank:** {ur_rank}\n**Your rep:** {ur_rep}\n\n"
+                color=discord.Color.blue(),
+                description=f"**Your rank:** {ur_rank}\n"
+                f"**Your rep:** {ur_rep} {self.bot.get_emoji(1046438031130886276)}\n\n",
             )
             embed.set_author(name=f"Reputation Leaderboard", icon_url=ctx.guild.icon)
             for user in chunk:
                 count += 1
-                embed.description += f"{count}. <@{user.user_id}>\nReputation: {user.reps}\n"
+                embed.description += (
+                    f"**{count}〉** <@{user.user_id}>\n"
+                    f"<:bullet:1014583675184230511> **Reputation** ◆"
+                    f"  {user.reps} {self.bot.get_emoji(1046438031130886276)}\n"
+                )
             embeds.append(embed)
         return await ClassicPaginator(ctx, embeds).start()
 
     @rep.command(help="Give +1 rep to a member")
-    @commands.cooldown(1, 120, commands.BucketType.user)
     @commands.guild_only()
     async def give(self, ctx: commands.Context, member: discord.Member) -> discord.Message | None:
         embed = discord.Embed(
@@ -98,7 +103,7 @@ class Reputation(commands.Cog):
         reps = await self.bot.db.rep.remove_rep(member.id, amount)
         embed1 = discord.Embed(
             title=f"<:tick:1001136782508826777> {ctx.author.name} took rep from {member.name}.",
-            description=f"{member.mention} now has {reps} rep.",
+            description=f"{member.mention} now has {reps} {self.bot.get_emoji(1046438031130886276)} rep.",
             color=discord.Color.green(),
         )
         await self.bot.logs.send(embed=embed1)
@@ -110,7 +115,7 @@ class Reputation(commands.Cog):
     async def clear(self, ctx: commands.Context, member: discord.Member) -> discord.Message:
         embed = discord.Embed(
             title=f"<:tick:1001136782508826777> {ctx.author.name} cleared {member.name}'s rep.",
-            description=f"{member.mention}'s rep reset to 0.",
+            description=f"{member.mention}'s rep reset to 0 {self.bot.get_emoji(1046438031130886276)}.",
             color=discord.Color.green(),
         )
         await self.bot.db.rep.clear_rep(member.id)

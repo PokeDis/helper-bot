@@ -55,7 +55,7 @@ class SelectPaginator(discord.ui.View):
         embed = self.items[self.select.category][self.page]
         embed.set_footer(
             text=f"Page {self.page + 1}/{len(self.items[self.select.category])}",
-            icon_url=self.ctx.author.avatar.url,
+            icon_url=self.ctx.author.display_avatar,
         )
         await inter.edit_original_response(embed=embed, view=self.disable_items())
 
@@ -97,7 +97,7 @@ class SelectPaginator(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.ctx.author.id:
             await interaction.response.send_message(
-                embed=self.ctx.bot.embeds.no_embed("You are not allowed to use this view."),
+                embed=discord.Embed(title="You are not allowed to use this view.", color=discord.Color.red()),
                 ephemeral=True,
             )
             return False
@@ -130,7 +130,7 @@ class SelectPaginator(discord.ui.View):
         embed = self.items[self.select.category][self.page]
         embed.set_footer(
             text=f"Page {self.page + 1}/{len(self.items[self.select.category])}",
-            icon_url=self.ctx.author.avatar.url,
+            icon_url=self.ctx.author.display_avatar,
         )
         self.message = await self.ctx.send(embed=embed, view=self.disable_items())
         return None

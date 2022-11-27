@@ -67,6 +67,8 @@ class Logger(commands.Cog):
         embed.add_field(name="Member Count", value=len(member.guild.members), inline=True)
         embed.set_thumbnail(url=member.display_avatar)
         embed.timestamp = discord.utils.utcnow()
+        role = member.guild.get_role(998515926007820338)
+        await member.add_roles(role)
         await self.bot.logs.send(embed=embed)
 
     @commands.Cog.listener()
@@ -268,8 +270,8 @@ class Logger(commands.Cog):
             await self.bot.logs.send(embed=embed)
         elif before.icon != after.icon:
             embed.description = f"{after.name} has updated their icon."
-            embed.add_field(name="Before", value=before.icon.url)
-            embed.add_field(name="After", value=after.icon.url)
+            embed.add_field(name="Before", value=before.icon)
+            embed.add_field(name="After", value=after.icon)
             await self.bot.logs.send(embed=embed)
         elif before.roles != after.roles:
             embed.description = f"Roles updated for {after.name}."

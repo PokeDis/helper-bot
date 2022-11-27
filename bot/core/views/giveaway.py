@@ -13,25 +13,29 @@ class GiveawayJoinView(discord.ui.View):
         self.bot = bot
 
     @staticmethod
-    async def make_base_embed(bot: "PokeHelper", message_id: int) -> discord.Embed | None:
+    async def make_base_embed(bot: "PokeHelper", message_id: int) -> tuple[discord.Embed, discord.Message] | None:
         data = await bot.db.giveaways.get_giveaway(message_id)
         if data is None:
             return
         relative_time = discord.utils.format_dt(data.end_time, style="R")
         full_time = discord.utils.format_dt(data.end_time, style="f")
         embed = discord.Embed(
-            title="Giveaway!",
-            description=f"React with 🎉 to enter!\n\n"
-            f"Hosted by: <@{data.host_id}>\n"
-            f"Prize: {data.prize}\n"
-            f"Winners: {data.winner_count}\n"
-            f"Entries: {len(data.participants)}\n"
-            f"Ends at: {relative_time} ({full_time})\n",
-            color=discord.Color.blue(),
+            description=f"*React with 🎉 to enter!*\n\n"
+            f"<:bullet:1014583675184230511> **Hosted by** ◆ <@{data.host_id}>\n"
+            f"<:bullet:1014583675184230511> **Prize** ◆ *{data.prize}*\n"
+            f"<:bullet:1014583675184230511> **Winners** ◆ `{data.winner_count}`\n"
+            f"<:bullet:1014583675184230511> **Entries** ◆ `{len(data.participants)}`\n"
+            f"<:bullet:1014583675184230511> **Ends at** ◆ {relative_time} 『{full_time}』",
+            color=discord.Color.random(),
         )
-        embed.set_footer(text="PokéLore Giveaway")
+        guild = bot.get_guild(data.guild_id) or await bot.fetch_guild(data.guild_id)
+        embed.set_author(name=f"{guild.name}'s Giveaway", icon_url=guild.icon)
+        embed.set_thumbnail(url=bot.user.display_avatar)
+        embed.set_footer(text=f"Giveaway ID: {data.message_id}")
         embed.timestamp = data.end_time
-        return embed
+        channel = guild.get_channel(data.channel_id) or await guild.fetch_channel(data.channel_id)
+        message = await channel.fetch_message(data.message_id)
+        return embed, message
 
     @staticmethod
     async def make_after_embed(bot: "PokeHelper", message_id: int) -> discord.Embed | None:
@@ -42,17 +46,19 @@ class GiveawayJoinView(discord.ui.View):
         relative_time = discord.utils.format_dt(time, style="R")
         full_time = discord.utils.format_dt(time, style="f")
         embed = discord.Embed(
-            title="Giveaway!",
-            description=f"This giveaway has been ended.\n\n"
-            f"Ended: {relative_time} ({full_time})\n"
-            f"Hosted by: <@{data.host_id}>\n"
-            f"Prize: {data.prize}\n"
-            f"Winners: {', '.join(map(lambda x: f'<@!{x}>', data.winners))}\n"
-            f"Entries: {len(data.participants)}\n",
-            color=discord.Color.blue(),
+            description=f"*Giveaway ended!*\n\n"
+            f"<:bullet:1014583675184230511> **Hosted by** ◆ <@{data.host_id}>\n"
+            f"<:bullet:1014583675184230511> **Prize** ◆ *{data.prize}*\n"
+            f"<:bullet:1014583675184230511> **Winners** ◆ `{data.winner_count}`\n"
+            f"<:bullet:1014583675184230511> **Entries** ◆ `{len(data.participants)}`\n"
+            f"<:bullet:1014583675184230511> **Ended** ◆ {relative_time} 『{full_time}』",
+            color=discord.Color.random(),
         )
-        embed.set_footer(text="PokéLore Giveaway")
+        embed.set_thumbnail(url=bot.user.display_avatar)
+        embed.set_footer(text=f"Giveaway ID: {data.message_id}")
         embed.timestamp = time
+        guild = bot.get_guild(data.guild_id) or await bot.fetch_guild(data.guild_id)
+        embed.set_author(name=f"{guild.name}'s Giveaway", icon_url=guild.icon)
         return embed
 
     @discord.ui.button(
@@ -64,11 +70,12 @@ class GiveawayJoinView(discord.ui.View):
         await interaction.response.defer()
         check = await self.bot.db.giveaways.giveaway_click(interaction.message.id, interaction.user.id)
         if check:
-            joined_embed = discord.Embed(description="Joined the giveaway!", color=discord.Color.blue())
+            joined_embed = discord.Embed(
+                title="<:tick:1001136782508826777> Joined Giveaway!", color=discord.Color.green()
+            )
             await interaction.followup.send(embed=joined_embed, ephemeral=True)
         else:
-            left_embed = discord.Embed(description="Left the giveaway!", color=discord.Color.blue())
+            left_embed = discord.Embed(title="<:tick:1001136782508826777> Left Giveaway!", color=discord.Color.green())
             await interaction.followup.send(embed=left_embed, ephemeral=True)
-        embed = await self.make_base_embed(self.bot, interaction.message.id)
-        embed.set_thumbnail(url=interaction.message.author.guild.icon.url)
-        await interaction.edit_original_response(embed=embed)
+        embed, message = await self.make_base_embed(self.bot, interaction.message.id)
+        await message.edit(embed=embed)

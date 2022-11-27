@@ -93,6 +93,11 @@ class AutoMod(commands.Cog):
         channels: list[discord.TextChannel | discord.VoiceChannel],
     ) -> tuple[list[discord.TextChannel | discord.VoiceChannel], list[discord.TextChannel | discord.VoiceChannel],]:
         success, failures = [], []
+        await ctx.bot.logs.send(
+            embed=discord.Embed(
+                title="Lockdown", description=f"**Lockdown started by {ctx.author}**", color=discord.Color.red()
+            )
+        )
         reason = f"Lockdown request by {ctx.author} (ID: {ctx.author.id})"
         async with ctx.typing():
             for channel in channels:
@@ -122,11 +127,16 @@ class AutoMod(commands.Cog):
         channels: list[discord.TextChannel | discord.VoiceChannel],
     ) -> tuple[list[discord.TextChannel | discord.VoiceChannel], list[discord.TextChannel | discord.VoiceChannel],]:
         success, failures = [], []
+        await ctx.bot.logs.send(
+            embed=discord.Embed(
+                title="Lockdown", description=f"**Lockdown ended by {ctx.author}**", color=discord.Color.green()
+            )
+        )
         reason = f"Lockdown-Lift request by {ctx.author} (ID: {ctx.author.id})"
         async with ctx.typing():
             for channel in channels:
                 for role in ctx.guild.roles:
-                    if not role.permissions.administrator and not role.permissions.is_bot_managed():
+                    if not role.permissions.administrator and not role.is_bot_managed():
                         try:
                             await channel.set_permissions(
                                 role,
@@ -146,7 +156,7 @@ class AutoMod(commands.Cog):
         return success, failures
 
     @commands.command(help="Locks down the server.")
-    @commands.has_permissions(manage_channels=True)
+    @commands.has_permissions(administrator=True)
     async def lockdown(
         self,
         ctx: commands.Context,
@@ -158,11 +168,22 @@ class AutoMod(commands.Cog):
         success, failures = await self.start_lockdown(ctx, channels)
         if failures:
             await ctx.send(
-                f"Successfully locked down {len(success)} channels, failed to lock down {len(failures)} channels.\n"
-                f"Failed to lock down: {', '.join(f'{c.mention} ({c.id})' for c in failures)}"
+                embed=discord.Embed(
+                    title="Lockdown",
+                    description=f"<:no:1001136828738453514> **Failed to lockdown"
+                    f" {len(failures)} channels.**\n"
+                    f"<:tick:1001136782508826777> **{len(success)}"
+                    f" channels were locked down.**",
+                    color=discord.Color.red(),
+                )
             )
         else:
-            await ctx.send(f"Successfully locked down {len(success)} channels.")
+            await ctx.send(
+                embed=discord.Embed(
+                    title=f"<:tick:1001136782508826777> Successfully locked down" f" {len(success)} channels.",
+                    color=discord.Color.green(),
+                )
+            )
 
     @commands.command(help="Lifts the lockdown on the server or specified channels.")
     @commands.has_permissions(administrator=True)
@@ -177,12 +198,22 @@ class AutoMod(commands.Cog):
         success, failures = await self.end_lockdown(ctx, channels)
         if failures:
             await ctx.send(
-                f"Successfully lifted lockdown on {len(success)} channels,"
-                f" failed to lift lockdown on {len(failures)} channels.\n"
-                f"Failed to lift lockdown on: {', '.join(f'{c.mention} ({c.id})' for c in failures)}"
+                embed=discord.Embed(
+                    title="Lockdown-Lift",
+                    description=f"<:no:1001136828738453514> **Failed to lift lockdown"
+                    f" {len(failures)} channels.**\n"
+                    f"<:tick:1001136782508826777> **{len(success)}"
+                    f" channels were unlocked.**",
+                    color=discord.Color.red(),
+                )
             )
         else:
-            await ctx.send(f"Successfully lifted lockdown on {len(success)} channels.")
+            await ctx.send(
+                embed=discord.Embed(
+                    title=f"<:tick:1001136782508826777> Successfully unlocked" f" {len(success)} channels.",
+                    color=discord.Color.green(),
+                )
+            )
 
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")

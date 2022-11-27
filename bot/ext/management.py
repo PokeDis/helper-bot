@@ -30,7 +30,7 @@ class Management(commands.Cog):
     @commands.command(help="Change nickname of a member")
     @commands.has_permissions(manage_nicknames=True)
     @commands.guild_only()
-    async def nick(self, ctx: commands.Context, member: discord.Member, nick: str | None = None) -> None:
+    async def nick(self, ctx: commands.Context, member: discord.Member, *, nick: str | None = None) -> None:
         nick = nick or member.name
         if len(nick) <= 32 and (ctx.author.top_role >= member.top_role or member != ctx.guild.owner):
             embed1 = discord.Embed(

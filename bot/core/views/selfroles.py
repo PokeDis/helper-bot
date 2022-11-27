@@ -11,6 +11,8 @@ if typing.TYPE_CHECKING:
 
 
 class RoleMenu(discord.ui.View):
+    message: discord.Message | None
+
     def __init__(
         self,
         ctx: commands.Context,
@@ -31,6 +33,9 @@ class RoleMenu(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.ctx.author.id
 
+    async def on_timeout(self) -> None:
+        await self.message.edit(embed=self.base_embed(), view=None)
+
     def prepare_embed(self) -> discord.Embed:
         self.embed.clear_fields()
         for role in self.get_roles():
@@ -40,10 +45,9 @@ class RoleMenu(discord.ui.View):
     def base_embed(self) -> discord.Embed:
         embed = discord.Embed(
             title="Self Roles",
-            description="Select roles to add or remove to yourself.",
+            description="<:bullet:1014583675184230511> *Select roles to add or remove to yourself.*",
             color=discord.Color.blurple(),
         )
-        embed.set_footer(text="Select roles to add or remove to yourself.")
         for role in self.get_roles():
             embed.add_field(name=role.name, value=role.mention, inline=False)
         return embed

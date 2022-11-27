@@ -136,11 +136,11 @@ class Collection(commands.Cog):
             )
             return await ctx.send(embed=embed)
         embeds = []
-        sr_no = [f"{i}. <@{j.user_id}>" for i, j in enumerate(records, start=1)]
+        sr_no = [f"**{i}〉** <@{j.user_id}>" for i, j in enumerate(records, start=1)]
         chunks = list(discord.utils.as_chunks(sr_no, 10))
         for i, j in enumerate(chunks):
             embed = discord.Embed(
-                title=f"{self.display_name(pokemon)} Collectors",
+                title=f"{self.bot.emoji(pokemon, animated=True)} {self.display_name(pokemon)} Collectors",
                 description="\n".join(j),
                 color=discord.Color.blue(),
             )

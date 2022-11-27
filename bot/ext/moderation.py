@@ -310,6 +310,21 @@ class Moderation(commands.Cog):
         await self.bot.logs.send(embed=embed)
         await ctx.send(embed=embed)
 
+    @commands.command(help="Displays bot stats")
+    @commands.guild_only()
+    async def info(self, ctx: commands.Context) -> None:
+        embed = discord.Embed(
+            title="Bot Stats",
+            color=discord.Color.blue(),
+        )
+        embed.add_field(name="Servers", value=f"{len(self.bot.guilds)}")
+        embed.add_field(name="Users", value=f"{len(self.bot.users)}")
+        embed.add_field(name="Bot latency", value=f"{round(self.bot.latency * 1000)}ms")
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Bot Host", url="https://crvt.co/b"))
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        await ctx.send(embed=embed, view=view)
+
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")
         self.clean_warns.start()
