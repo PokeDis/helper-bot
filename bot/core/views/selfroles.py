@@ -39,7 +39,7 @@ class RoleMenu(discord.ui.View):
     def prepare_embed(self) -> discord.Embed:
         self.embed.clear_fields()
         for role in self.get_roles():
-            self.embed.add_field(name=role.name, value=role.mention, inline=False)
+            self.embed.add_field(name=role.name, value=f"{self.bot.emoji(role.name)} {role.mention}", inline=True)
         return self.embed
 
     def base_embed(self) -> discord.Embed:
@@ -49,7 +49,7 @@ class RoleMenu(discord.ui.View):
             color=discord.Color.blurple(),
         )
         for role in self.get_roles():
-            embed.add_field(name=role.name, value=role.mention, inline=False)
+            embed.add_field(name=role.name, value=f"{self.bot.emoji(role.name)} {role.mention}", inline=True)
         return embed
 
     def get_roles(self) -> list[discord.Role]:
@@ -74,11 +74,11 @@ class RoleMenu(discord.ui.View):
                 self.added.channel_id
             )
             message = await channel.fetch_message(self.added.message_id)
-            await message.edit(embed=self.base_embed(), view=RoleView(role_list=self.get_roles()))
+            await message.edit(embed=self.base_embed(), view=RoleView(self.bot, role_list=self.get_roles()))
             await self.bot.db.roles.update_roles(self.added.message_id, self.container)
         else:
             embed = self.base_embed()
-            message = await self.ctx.send(embed=embed, view=RoleView(role_list=self.get_roles()))
+            message = await self.ctx.send(embed=embed, view=RoleView(self.bot, role_list=self.get_roles()))
             menu = Menu(
                 message_id=message.id,
                 guild_id=self.ctx.guild.id,

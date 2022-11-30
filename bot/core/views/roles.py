@@ -1,14 +1,19 @@
+import typing
+
 import discord
+
+if typing.TYPE_CHECKING:
+    from bot.core import PokeHelper
 
 
 class RoleMenu(discord.ui.Select):
-    def __init__(self, role_list: list[discord.Role]) -> None:
+    def __init__(self, bot: "PokeHelper", role_list: list[discord.Role]) -> None:
         self.roles = role_list
         options = [
             discord.SelectOption(
                 label=f"{role.name.title()}",
                 value=f"{role.id}",
-                emoji=role.unicode_emoji if role.unicode_emoji else "<:dustbin:989150297333043220>",
+                emoji=role.unicode_emoji if role.unicode_emoji else bot.emoji(role.name),
             )
             for role in self.roles
         ]
@@ -30,10 +35,11 @@ class RoleView(discord.ui.View):
 
     def __init__(
         self,
+        bot: "PokeHelper",
         *,
         timeout: float | None = None,
         role_list: list[discord.Role] | None = None,
     ) -> None:
         super().__init__(timeout=timeout)
         self.role_list = role_list or []
-        self.add_item(RoleMenu(self.role_list))
+        self.add_item(RoleMenu(bot, self.role_list))

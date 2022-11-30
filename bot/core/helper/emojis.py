@@ -617,4 +617,10 @@ EMOJIS: dict[str, int] = {
     "a:donphan_sh": 998792626948034601,
     "a:dunsparce_sh": 998792629896609874,
     "a:elekid_sh": 998792631616290816,
+    ":pokemontrainer": 1046823419058065419,
+    ":pokemonprofessor": 1046823138534633572,
+    ":pokemonmaniac": 1046823031324024862,
+    ":pokemonhunter": 1046823524817457272,
+    ":pokemonbreeder": 1046823319585955930,
+    ":pokemonbattler": 1046823216947146792,
 }
