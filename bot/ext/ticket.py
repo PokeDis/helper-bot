@@ -73,14 +73,18 @@ class Ticket(commands.Cog):
         create_channel = await ticket_category.create_text_channel("create-ticket")
         view = TicketCreateView()
         embed = discord.Embed(
-            title="Support Ticket",
-            description="<:bullet:1014583675184230511> Opening tickets without reason will result in penalties.\n"
-            "<:bullet:1014583675184230511> Mention the reason you opened the ticket for right away.\n"
-            "<:bullet:1014583675184230511> Specify the reason descriptively.\n"
-            "<:bullet:1014583675184230511> Do not ping any staff or developers."
-            " Wait patiently as all tickets will be attended.",
+            title="<:dragonite:1053320459464212480> Support Ticket",
             color=discord.Color.blue(),
         )
+        embed.set_footer(
+            text="➣ Opening tickets without reason will result in penalties.\n"
+            "➣ Mention the reason you opened the ticket for right away.\n"
+            "➣ Specify the reason descriptively.\n"
+            "➣ Do not ping any staff or developers."
+            " Wait patiently as all tickets will be attended.\n\n\n"
+            "Click the button below to open a ticket."
+        )
+        embed.set_image(url="https://i.imgur.com/5Esg7HA.png")
         await create_channel.send(embed=embed, view=view)
         await ctx.message.add_reaction("<:tick:1001136782508826777>")
 

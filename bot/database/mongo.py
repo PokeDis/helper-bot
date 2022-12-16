@@ -203,7 +203,7 @@ class CollectionDB:
     async def remove_item(self, user_id: int, item: str) -> Collection | None:
         collection = await self.get_collection(user_id)
         if collection is None:
-            return
+            return None
         collection.remove_item(item)
         await self.collection.update_one({"user_id": user_id}, {"$set": {"collection": list(collection.collection)}})
         return collection

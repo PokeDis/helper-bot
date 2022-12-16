@@ -32,6 +32,7 @@ class GiveawayJoinView(discord.ui.View):
         embed.set_author(name=f"{guild.name}'s Giveaway", icon_url=guild.icon)
         embed.set_thumbnail(url=bot.user.display_avatar)
         embed.set_footer(text=f"Giveaway ID: {data.message_id}")
+        embed.set_image(url="https://i.imgur.com/UYZatsQ.png")
         embed.timestamp = data.end_time
         channel = guild.get_channel(data.channel_id) or await guild.fetch_channel(data.channel_id)
         message = await channel.fetch_message(data.message_id)
@@ -57,6 +58,7 @@ class GiveawayJoinView(discord.ui.View):
         embed.set_thumbnail(url=bot.user.display_avatar)
         embed.set_footer(text=f"Giveaway ID: {data.message_id}")
         embed.timestamp = time
+        embed.set_image(url="https://i.imgur.com/UYZatsQ.png")
         guild = bot.get_guild(data.guild_id) or await bot.fetch_guild(data.guild_id)
         embed.set_author(name=f"{guild.name}'s Giveaway", icon_url=guild.icon)
         return embed

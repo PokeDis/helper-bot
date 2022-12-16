@@ -44,12 +44,14 @@ class RoleMenu(discord.ui.View):
 
     def base_embed(self) -> discord.Embed:
         embed = discord.Embed(
-            title="Self Roles",
-            description="<:bullet:1014583675184230511> *Select roles to add or remove to yourself.*",
+            title="Self Roles <:jirachi:1053321528810422333>",
+            description="<:bullet:1014583675184230511> *Select roles to add or remove to yourself.*\n\n",
             color=discord.Color.blurple(),
         )
         for role in self.get_roles():
             embed.add_field(name=role.name, value=f"{self.bot.emoji(role.name)} {role.mention}", inline=True)
+        embed.set_image(url="https://i.imgur.com/UTpsN9X.png")
+        embed.set_thumbnail(url=self.ctx.guild.icon)
         return embed
 
     def get_roles(self) -> list[discord.Role]:

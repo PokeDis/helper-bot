@@ -118,6 +118,7 @@ class Giveaway(commands.Cog):
                 f" 『{discord.utils.format_dt(datetime.datetime.now() + duration, style='f')}』",
                 color=discord.Color.random(),
             )
+            embed.set_image(url="https://i.imgur.com/UYZatsQ.png")
             embed.timestamp = datetime.datetime.now() + duration
             embed.set_thumbnail(url=self.bot.user.display_avatar)
             embed.set_author(name=f"{ctx.guild.name}'s Giveaway", icon_url=ctx.guild.icon)
@@ -192,7 +193,7 @@ class Giveaway(commands.Cog):
                     )
                 )
             winner = random.choice(left)
-            return await message.reply(content=f"🎉 Congratulations {winner.mention}! You won **{data.prize}**!")
+            return await message.reply(content=f"🎉 Congratulations <@{winner}>! You won **{data.prize}**!")
         embed = discord.Embed(
             description="<:no:1001136828738453514> **I couldn't determine a winner for that giveaway...**\n"
             "**Reason:** Giveaway might already have been expired! Please re-check `message_id`.",

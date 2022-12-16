@@ -30,7 +30,10 @@ class PokeHelper(commands.Bot):
     def __init__(self) -> None:
         load_dotenv()
         super().__init__(
-            command_prefix=commands.when_mentioned_or("?"), intents=discord.Intents.all(), case_insensitive=True
+            command_prefix=commands.when_mentioned_or("?"),
+            intents=discord.Intents.all(),
+            case_insensitive=True,
+            owner_ids={656838010532265994, 580034015759826944, 730271192778539078},
         )
 
     def emoji(
@@ -61,6 +64,7 @@ class PokeHelper(commands.Bot):
             for file in os.listdir("bot/ext")
             if file.endswith(".py") and not file.startswith("_")
         ]
+        await self.load_extension("jishaku")
         self.logs = self.get_channel(998285318987989063) or await self.fetch_channel(998285318987989063)
         self.add_views(
             GiveawayJoinView(self), TicketCreateView(), TicketCloseView(), InsideTicketView(), RoleView(self)
