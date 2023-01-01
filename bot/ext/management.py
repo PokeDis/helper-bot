@@ -27,6 +27,10 @@ class Management(commands.Cog):
             oldest_first=False,
         )
 
+    @commands.command(help="Returns the bot's latency")
+    async def ping(self, ctx: commands.Context) -> None:
+        await ctx.send(embed=discord.Embed(title=f"Pong! {round(self.bot.latency * 1000)}ms"))
+
     @commands.command(help="Change nickname of a member")
     @commands.has_permissions(manage_nicknames=True)
     @commands.guild_only()
@@ -48,6 +52,7 @@ class Management(commands.Cog):
 
     @commands.command(help="Suggest something to get public opinions")
     @commands.guild_only()
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     async def suggest(self, ctx: commands.Context, *, suggestion: str) -> None:
         suggestion_channel = discord.utils.get(ctx.guild.text_channels, name="suggestions")
         suggestion_embed = discord.Embed(description=f"**Suggestion**\n\n{suggestion}", color=discord.Color.blue())
@@ -66,6 +71,21 @@ class Management(commands.Cog):
         )
         feedback_embed.set_footer(text="The staff team will review your suggestion as soon as possible.")
         await ctx.send(embed=feedback_embed)
+
+    @commands.command(help="Report a bug or a problem")
+    @commands.guild_only()
+    @commands.cooldown(1, 1800, commands.BucketType.user)
+    async def report(self, ctx: commands.Context, *, report: str) -> None:
+        bug_channel = discord.utils.get(ctx.guild.text_channels, name="bugs")
+        bug_embed = discord.Embed(description=f"**Bug**```fix\n{report}```", color=discord.Color.red())
+        bug_embed.set_author(
+            name=f"{str(ctx.author)} - {ctx.author.id}",
+            icon_url=ctx.author.display_avatar,
+        )
+        bug_embed.timestamp = discord.utils.utcnow()
+        msg = await bug_channel.send(embed=bug_embed)
+        await msg.add_reaction("✅")
+        await ctx.send(embed=discord.Embed(description=f"✅ Your bug has been reported.", color=discord.Color.green()))
 
     @commands.command(help="Lock mentioned or current channel")
     @commands.has_permissions(manage_channels=True)

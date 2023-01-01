@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from bot.core.helper import SpamCheck
+from bot.database import Guild
 
 if typing.TYPE_CHECKING:
     from bot.core import PokeHelper
@@ -92,7 +93,7 @@ class AutoMod(commands.Cog):
         ctx: commands.Context,
         channels: list[discord.TextChannel | discord.VoiceChannel],
     ) -> tuple[list[discord.TextChannel | discord.VoiceChannel], list[discord.TextChannel | discord.VoiceChannel],]:
-        success, failures = [], []
+        success, failures = set(), set()
         await ctx.bot.logs.send(
             embed=discord.Embed(
                 title="Lockdown", description=f"**Lockdown started by {ctx.author}**", color=discord.Color.red()
@@ -116,17 +117,17 @@ class AutoMod(commands.Cog):
                                 send_messages_in_threads=False,
                             )
                         except discord.HTTPException:
-                            failures.append(channel)
+                            failures.add(channel)
                         else:
-                            success.append(channel)
-        return success, failures
+                            success.add(channel)
+        return list(success), list(failures)
 
-    @staticmethod
     async def end_lockdown(
+        self,
         ctx: commands.Context,
         channels: list[discord.TextChannel | discord.VoiceChannel],
     ) -> tuple[list[discord.TextChannel | discord.VoiceChannel], list[discord.TextChannel | discord.VoiceChannel],]:
-        success, failures = [], []
+        success, failures = set(), set()
         await ctx.bot.logs.send(
             embed=discord.Embed(
                 title="Lockdown", description=f"**Lockdown ended by {ctx.author}**", color=discord.Color.green()
@@ -134,26 +135,23 @@ class AutoMod(commands.Cog):
         )
         reason = f"Lockdown-Lift request by {ctx.author} (ID: {ctx.author.id})"
         async with ctx.typing():
-            for channel in channels:
-                for role in ctx.guild.roles:
-                    if not role.permissions.administrator and not role.is_bot_managed():
+            settings = await self.bot.db.guilds.get_channels(ctx.guild.id)
+            for old_channel, setting in settings.items():
+                if int(old_channel) in [channel.id for channel in channels]:
+                    for role_id, role_setting in setting.items():
                         try:
+                            channel = ctx.guild.get_channel(int(old_channel))
+                            role = ctx.guild.get_role(int(role_id))
                             await channel.set_permissions(
                                 role,
-                                send_messages=True,
+                                **role_setting,
                                 reason=reason,
-                                connect=True,
-                                use_application_commands=True,
-                                add_reactions=True,
-                                create_private_threads=True,
-                                create_public_threads=True,
-                                send_messages_in_threads=True,
                             )
                         except discord.HTTPException:
-                            failures.append(channel)
+                            failures.add(channel)
                         else:
-                            success.append(channel)
-        return success, failures
+                            success.add(channel)
+        return list(success), list(failures)
 
     @commands.command(help="Locks down the server.")
     @commands.has_permissions(administrator=True)
@@ -165,6 +163,7 @@ class AutoMod(commands.Cog):
     ) -> None:
         if channels is None:
             channels = ctx.guild.channels
+        await self.add_guild_data(ctx.guild.id)
         success, failures = await self.start_lockdown(ctx, channels)
         if failures:
             await ctx.send(
@@ -214,6 +213,39 @@ class AutoMod(commands.Cog):
                     color=discord.Color.green(),
                 )
             )
+
+    @staticmethod
+    def add_channel_data(guild: discord.Guild) -> dict[str, dict[str, dict[str, bool | None]]]:
+        channels = {}
+        for channel in guild.channels:
+            channels[f"{channel.id}"] = {}
+            for k, v in channel.overwrites.items():
+                if isinstance(k, discord.Role):
+                    channels[f"{channel.id}"][f"{k.id}"] = dict(v)
+            if not channels[f"{channel.id}"]:
+                for role in guild.roles:
+                    if not role.permissions.administrator and not role.is_bot_managed():
+                        channels[f"{channel.id}"][f"{role.id}"] = dict(
+                            send_messages=None,
+                            connect=None,
+                            use_application_commands=None,
+                            add_reactions=None,
+                            create_private_threads=None,
+                            create_public_threads=None,
+                            send_messages_in_threads=None,
+                        )
+        return channels
+
+    async def add_guild_data(self, guild_id: int = 998133764960039033) -> None:
+        guild = await self.bot.db.guilds.get_guild(guild_id)
+        data = self.bot.get_guild(guild_id) or await self.bot.fetch_guild(guild_id)
+        channels = self.add_channel_data(data)
+        if guild is None:
+            await self.bot.db.guilds.add_guild(Guild(guild_id, channels))
+            print(f"✅ Added guild {data} to the database!")
+        else:
+            await self.bot.db.guilds.update_channel(guild_id, channels)
+            print(f"✅ Updated guild {data} in the database!")
 
     async def cog_load(self):
         print(f"✅ Cog {self.qualified_name} was successfully loaded!")

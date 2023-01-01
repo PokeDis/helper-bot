@@ -12,6 +12,7 @@ __all__: tuple[str, ...] = (
     "Giveaway",
     "Reminder",
     "Menu",
+    "Guild",
 )
 
 
@@ -186,3 +187,19 @@ class Menu:
             "guild_id": self.guild_id,
             "role_ids": list(self.role_ids),
         }
+
+
+@dataclasses.dataclass
+class Guild:
+    guild_id: int
+    channel_settings: dict[str, dict[str, dict[str, bool | None]]] = dataclasses.field(default_factory=dict)
+
+    def get_payload(self) -> dict[str, int | dict[str, dict[int, dict[str, bool | None]]]]:
+        return {
+            "guild_id": self.guild_id,
+            "channel_settings": self.channel_settings,
+        }
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, int | dict[str, dict[int, dict[str, bool | None]]]]) -> "Guild":
+        return cls(payload.get("guild_id", 0), payload.get("channel_settings", {}))

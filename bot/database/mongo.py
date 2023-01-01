@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from .models import Collection, Giveaway, Menu, Reminder, Tag, UserRep, WarnLog
+from .models import Collection, Giveaway, Guild, Menu, Reminder, Tag, UserRep, WarnLog
 
 if typing.TYPE_CHECKING:
     from .database import Mongo
@@ -15,6 +15,7 @@ __all__: tuple[str, ...] = (
     "GiveawayDB",
     "ReminderDB",
     "RolesDB",
+    "GuildDB",
 )
 
 
@@ -319,3 +320,27 @@ class RolesDB:
 
     async def delete_menu(self, message_id: int) -> None:
         await self.collection.delete_one({"message_id": message_id})
+
+
+class GuildDB:
+    def __init__(self, client: "Mongo") -> None:
+        self.client = client
+        self.collection = client["data"]["guild"]
+        self.client.guilds = self
+
+    async def get_guild(self, guild_id: int) -> Guild | None:
+        data = await self.collection.find_one({"guild_id": guild_id}, {"_id": 0})
+        return Guild.from_payload(data) if data else None
+
+    async def add_guild(self, data: Guild) -> None:
+        await self.collection.insert_one(data.get_payload())
+
+    async def update_channel(self, guild_id: int, channels: dict[str, typing.Any]) -> None:
+        await self.collection.update_one({"guild_id": guild_id}, {"$set": {"channel_settings": channels}})
+
+    async def delete_guild(self, guild_id: int) -> None:
+        await self.collection.delete_one({"guild_id": guild_id})
+
+    async def get_channels(self, guild_id: int) -> dict[str, dict[str, dict[str, bool | None]]]:
+        data = await self.get_guild(guild_id)
+        return data.channel_settings if data else {}
