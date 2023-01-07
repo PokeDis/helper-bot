@@ -15,6 +15,7 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
     reminders: ReminderDB
     roles: RolesDB
     guilds: GuildDB
+    afk: AfkDB
 
     def __init__(self) -> None:
         super().__init__(os.getenv("MONGODB"))
@@ -26,3 +27,4 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
         ReminderDB(self)
         RolesDB(self)
         GuildDB(self)
+        AfkDB(self)

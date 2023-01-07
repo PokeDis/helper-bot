@@ -13,6 +13,7 @@ __all__: tuple[str, ...] = (
     "Reminder",
     "Menu",
     "Guild",
+    "UserAfk",
 )
 
 
@@ -203,3 +204,15 @@ class Guild:
     @classmethod
     def from_payload(cls, payload: dict[str, int | dict[str, dict[int, dict[str, bool | None]]]]) -> "Guild":
         return cls(payload.get("guild_id", 0), payload.get("channel_settings", {}))
+
+
+@dataclasses.dataclass
+class UserAfk(Cooldown):
+    reason: str
+
+    def get_payload(self) -> dict[str, int | datetime.datetime | str]:
+        return {
+            "user_id": self.user_id,
+            "time": self.time,
+            "reason": self.reason,
+        }

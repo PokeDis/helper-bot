@@ -30,7 +30,7 @@ class PokeHelper(commands.Bot):
     def __init__(self) -> None:
         load_dotenv()
         super().__init__(
-            command_prefix=commands.when_mentioned_or("?"),
+            command_prefix=commands.when_mentioned_or("."),
             intents=discord.Intents.all(),
             case_insensitive=True,
             owner_ids={656838010532265994, 580034015759826944, 730271192778539078},

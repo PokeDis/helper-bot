@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from .models import Collection, Giveaway, Guild, Menu, Reminder, Tag, UserRep, WarnLog
+from .models import Collection, Giveaway, Guild, Menu, Reminder, Tag, UserAfk, UserRep, WarnLog
 
 if typing.TYPE_CHECKING:
     from .database import Mongo
@@ -16,6 +16,7 @@ __all__: tuple[str, ...] = (
     "ReminderDB",
     "RolesDB",
     "GuildDB",
+    "AfkDB",
 )
 
 
@@ -344,3 +345,27 @@ class GuildDB:
     async def get_channels(self, guild_id: int) -> dict[str, dict[str, dict[str, bool | None]]]:
         data = await self.get_guild(guild_id)
         return data.channel_settings if data else {}
+
+
+class AfkDB:
+    def __init__(self, client: "Mongo") -> None:
+        self.client = client
+        self.collection = client["data"]["afk"]
+        self.client.afk = self
+
+    async def add_afk(self, data: UserAfk) -> None:
+        await self.collection.insert_one(data.get_payload())
+
+    async def get_afk(self, user_id: int) -> UserAfk | None:
+        data = await self.collection.find_one({"user_id": user_id}, {"_id": 0})
+        return UserAfk(**data) if data else None
+
+    async def delete_afk(self, user_id: int) -> None:
+        await self.collection.delete_one({"user_id": user_id})
+
+    async def get_all_afk(self) -> list[UserAfk]:
+        data = await self.collection.find({}, {"_id": 0}).to_list(None)
+        return [UserAfk(**afk) for afk in data]
+
+    async def get_total_afk(self) -> int:
+        return await self.collection.count_documents({})

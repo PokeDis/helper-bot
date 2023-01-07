@@ -55,7 +55,9 @@ class Management(commands.Cog):
     @commands.cooldown(1, 3600, commands.BucketType.user)
     async def suggest(self, ctx: commands.Context, *, suggestion: str) -> None:
         suggestion_channel = discord.utils.get(ctx.guild.text_channels, name="suggestions")
-        suggestion_embed = discord.Embed(description=f"**Suggestion**\n\n{suggestion}", color=discord.Color.blue())
+        suggestion_embed = discord.Embed(
+            description=f"**Suggestion**\n```fix\n{suggestion}```", color=discord.Color.blue()
+        )
         suggestion_embed.set_author(
             name=f"{str(ctx.author)} - {ctx.author.id}",
             icon_url=ctx.author.display_avatar,
