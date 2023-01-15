@@ -296,7 +296,7 @@ class Logger(commands.Cog):
     async def on_guild_channel_delete(self, channel: discord.TextChannel) -> None:
         embed = discord.Embed(
             title="Delete Channel",
-            description=f"{channel.mention} has been deleted.",
+            description=f"{channel.name} has been deleted.",
             color=discord.Color.red(),
         )
         embed.set_thumbnail(url=channel.guild.icon)
