@@ -216,3 +216,21 @@ class UserAfk(Cooldown):
             "time": self.time,
             "reason": self.reason,
         }
+
+
+@dataclasses.dataclass(kw_only=True)
+class InviterData:
+    invite_code: str
+    user_id: int
+    uses: int = 0
+    left: int = 0
+    invited_users: list[int] = []
+
+    def get_payload(self) -> dict[str, str | int | list[int]]:
+        return {
+            "invite_code": self.invite_code,
+            "user_id": self.user_id,
+            "uses": self.uses,
+            "left": self.left,
+            "invited_users": self.invited_users,
+        }
