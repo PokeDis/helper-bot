@@ -11,6 +11,9 @@ if typing.TYPE_CHECKING:
 
 class InviteTracker(commands.Cog):
     """Track your invite progress"""
+
+    INVITE_STREAK_GAP: int = 5
+
     def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot
         self.invite_map: dict[str, int] = {}
@@ -35,30 +38,41 @@ class InviteTracker(commands.Cog):
         new_invite = [code for code, uses in new_data.items() if new_data[code] != older_data.get(code)]
         if not new_invite:
             return
-        code = new_invite[0]
-        data: InviterData = await self.bot.db.invites.get_invite(code)
-        data.uses += 1
-        data.invited_users.append(member.id)
-        await self.bot.db.invites.update_invite(code, data)
-        self.bot.dispatch(f"on_{data.uses - data.left}_invites", data.user_id)
+        inviter = await self.bot.db.invites.get_by_invite(member.id)
+        if inviter:
+            _rejoin = True
+        else:
+            code = new_invite[0]
+            data: InviterData = await self.bot.db.invites.get_invite(code)
+            data.uses += 1
+            data.invited_users.append(member.id)
+            await self.bot.db.invites.update_invite(code, data)
+            _rejoin = False
+            invite_data_list = await self.bot.db.invites.get_all_invites(data.user_id)
+            total_invites = sum([inv.uses for inv in invite_data_list])
+            left_users = sum([inv.left for inv in invite_data_list])
+            if (invites := total_invites - left_users) % self.INVITE_STREAK_GAP == 0:
+                self.bot.dispatch("invite_streak", invites // self.INVITE_STREAK_GAP, data.user_id)
         await self.bot.get_partial_messageable(1012229238415433768).send(
             embed=discord.Embed(
-                description=f"`{member}` ({member.id}) was invited by <@{data.user_id}> ({data.user_id})"
+                description=f"`{member}` ({member.id}) was invited by <@{data.user_id}> ({data.user_id}) (rejoin: {_rejoin})"
             )
         )
+
+    @commands.Cog.listener()
+    async def on_invite_streak(self, streak: int, user_id: int) -> None:
+        user = self.bot.get_channel(user_id) or await self.bot.fetch_channel(user_id)
 
     @commands.Cog.listener("on_member_remove")
     async def remove_invite(self, member: discord.Member) -> None:
         data: InviterData = await self.bot.db.invites.get_by_invite(member.id)
         if data:
-            data.invited_users.remove(member.id)
             data.left += 1
             await self.bot.db.invites.update_invite(data.invite_code, data)
 
     @commands.command("invites", help="Check invite info for a user.")
     async def invites(self, ctx: commands.Context, user: discord.Member = commands.Author) -> None:
         invite_data_list: list[InviterData] = await self.bot.db.invites.get_all_invites(user.id)
-        print(invite_data_list)
         if not invite_data_list:
             await ctx.reply("User has not created any valid invite yet")
             return
