@@ -74,4 +74,5 @@ class PokeHelper(commands.Bot):
         print(f"Logged in as {self.user}")
 
     async def start(self, token: str | None = None, *, reconnect: bool = True) -> None:
+        discord.utils.setup_logging()
         await super().start(token or os.getenv("TOKEN"), reconnect=reconnect)

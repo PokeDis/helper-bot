@@ -10,6 +10,7 @@ if typing.TYPE_CHECKING:
 
 
 class InviteTracker(commands.Cog):
+    """Track your invite progress"""
     def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot
         self.invite_map: dict[str, int] = {}
@@ -24,13 +25,14 @@ class InviteTracker(commands.Cog):
     @commands.Cog.listener("on_invite_create")
     async def add_invite_code(self, invite: discord.Invite) -> None:
         data = InviterData(invite_code=invite.code, user_id=invite.inviter.id)
+
         await self.bot.db.invites.add_invite(data)
 
     @commands.Cog.listener("on_member_join")
     async def add_invite(self, member: discord.Member) -> None:
         older_data = self.invite_map.copy()
         self.invite_map = (new_data := await self.get_current_invites_map())
-        new_invite = [code for code, uses in new_data if new_data[code] != older_data[code]]
+        new_invite = [code for code, uses in new_data.items() if new_data[code] != older_data.get(code)]
         if not new_invite:
             return
         code = new_invite[0]
@@ -39,20 +41,27 @@ class InviteTracker(commands.Cog):
         data.invited_users.append(member.id)
         await self.bot.db.invites.update_invite(code, data)
         self.bot.dispatch(f"on_{data.uses - data.left}_invites", data.user_id)
+        await self.bot.get_partial_messageable(1012229238415433768).send(
+            embed=discord.Embed(
+                description=f"`{member}` ({member.id}) was invited by <@{data.user_id}> ({data.user_id})"
+            )
+        )
 
     @commands.Cog.listener("on_member_remove")
     async def remove_invite(self, member: discord.Member) -> None:
         data: InviterData = await self.bot.db.invites.get_by_invite(member.id)
         if data:
             data.invited_users.remove(member.id)
-            data.left -= 1
+            data.left += 1
             await self.bot.db.invites.update_invite(data.invite_code, data)
 
-    @commands.command("invites", description="Check invite info for a user.")
+    @commands.command("invites", help="Check invite info for a user.")
     async def invites(self, ctx: commands.Context, user: discord.Member = commands.Author) -> None:
         invite_data_list: list[InviterData] = await self.bot.db.invites.get_all_invites(user.id)
+        print(invite_data_list)
         if not invite_data_list:
             await ctx.reply("User has not created any valid invite yet")
+            return
         total_invites = sum([inv.uses for inv in invite_data_list])
         left_users = sum([inv.left for inv in invite_data_list])
         embed = discord.Embed(
@@ -62,7 +71,7 @@ class InviteTracker(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @commands.command("inviter", description="Check who invited the user in the server.")
+    @commands.command("inviter", help="Check who invited the user in the server.")
     async def inviter(self, ctx: commands.Context, user: discord.Member = commands.Author) -> None:
         data: InviterData | None = await self.bot.db.invites.get_by_invite(user.id)
         if data:

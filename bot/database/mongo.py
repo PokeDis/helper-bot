@@ -376,7 +376,7 @@ class InviteDB:
     def __init__(self, client: "Mongo") -> None:
         self.client = client
         self.collection = client["data"]["invite"]
-        self.client.invite = self
+        self.client.invites = self
 
     async def add_invite(self, data: InviterData) -> None:
         await self.collection.insert_one(data.get_payload())
