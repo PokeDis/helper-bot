@@ -16,6 +16,7 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
     roles: RolesDB
     guilds: GuildDB
     afk: AfkDB
+    invites: InviteDB
 
     def __init__(self) -> None:
         super().__init__(os.getenv("MONGODB"))
@@ -28,3 +29,4 @@ class Mongo(motor_asyncio.AsyncIOMotorClient):
         RolesDB(self)
         GuildDB(self)
         AfkDB(self)
+        InviteDB(self)

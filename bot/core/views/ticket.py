@@ -133,6 +133,7 @@ class TicketCreateView(discord.ui.View):
             overwrites=overwrites,
         )
         await channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
+        await asyncio.sleep(2)
         a_embed = discord.Embed(
             description=f"<:tick:1001136782508826777> Created ticket. Please head towards {channel.mention}.",
             color=discord.Color.green(),
@@ -146,5 +147,6 @@ class TicketCreateView(discord.ui.View):
         embed.add_field(name="Time Opened", value=f"{create_time}")
         embed.add_field(name="Opened For", value=str(interaction.user))
         embed.set_footer(text="Please be patient while a staff member gets to this ticket.")
+        await asyncio.sleep(2)
         message = await channel.send(f"{interaction.user.mention}", embed=embed, view=view)
         await message.pin()

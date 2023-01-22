@@ -15,9 +15,8 @@ class InviteTracker(commands.Cog):
         self.invite_map: dict[str, int] = {}
         super().__init__()
 
-    async def get_current_invites_map(self) -> None:
-
-        guild = self.bot.get_guild(id := 998133764960039033) or await self.bot.fetch_guild(id)
+    async def get_current_invites_map(self) -> dict[str, int]:
+        guild = self.bot.get_guild(id_ := 998133764960039033) or await self.bot.fetch_guild(id_)
         return {invite.code: invite.uses for invite in await guild.invites()}
 
     async def cog_load(self) -> None:
@@ -26,7 +25,7 @@ class InviteTracker(commands.Cog):
     @commands.Cog.listener("on_invite_create")
     async def add_invite_code(self, invite: discord.Invite) -> None:
         data = InviterData(invite_code=invite.code, user_id=invite.inviter.id)
-        # push data in the invite collection .....
+        await self.bot.db.invites.add_invite(data)
 
     @commands.Cog.listener("on_member_join")
     async def add_invite(self, member: discord.Member) -> None:
@@ -36,27 +35,24 @@ class InviteTracker(commands.Cog):
         if not new_invite:
             return
         code = new_invite[0]
-        data: InviterData = object()
-        # get the data from your collection using the `code` key
+        data: InviterData = await self.bot.db.invites.get_invite(code)
         data.uses += 1
         data.invited_users.append(member.id)
-        # push the new data instance back into the collection with updated info
-        await self.bot.dispatch(f"on_{data.uses - data.left}_invites", data.user_id)
+        await self.bot.db.invites.update_invite(code, data)
+        self.bot.dispatch(f"on_{data.uses - data.left}_invites", data.user_id)
 
     @commands.Cog.listener("on_member_remove")
     async def remove_invite(self, member: discord.Member) -> None:
-        # find the data collection which holds member.id in invited_users
-        data: InviterData = object()
+        data: InviterData = await self.bot.db.invites.get_by_invite(member.id)
         if data:
             data.invited_users.remove(member.id)
             data.left -= 1
-            # push the updated data instances back into collection
+            await self.bot.db.invites.update_invite(data.invite_code, data)
 
     @commands.command("invites", description="Check invite info for a user.")
     async def invites(self, ctx: commands.Context, user: discord.Member = commands.Author) -> None:
-        invite_data_list: list[InviterData] = []
-        # fetch all InviteDatas collection which have their creator id as user.id
-        if invite_data_list == []:
+        invite_data_list: list[InviterData] = await self.bot.db.invites.get_all_invites(user.id)
+        if not invite_data_list:
             await ctx.reply("User has not created any valid invite yet")
         total_invites = sum([inv.uses for inv in invite_data_list])
         left_users = sum([inv.left for inv in invite_data_list])
@@ -69,8 +65,7 @@ class InviteTracker(commands.Cog):
 
     @commands.command("inviter", description="Check who invited the user in the server.")
     async def inviter(self, ctx: commands.Context, user: discord.Member = commands.Author) -> None:
-        # find the data collection which holds user.id in invited_users, None if not found
-        data: InviterData | None = object()
+        data: InviterData | None = await self.bot.db.invites.get_by_invite(user.id)
         if data:
             await ctx.reply(
                 embed=discord.Embed(

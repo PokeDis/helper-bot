@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from .models import Collection, Giveaway, Guild, Menu, Reminder, Tag, UserAfk, UserRep, WarnLog
+from .models import Collection, Giveaway, Guild, InviterData, Menu, Reminder, Tag, UserAfk, UserRep, WarnLog
 
 if typing.TYPE_CHECKING:
     from .database import Mongo
@@ -17,6 +17,7 @@ __all__: tuple[str, ...] = (
     "RolesDB",
     "GuildDB",
     "AfkDB",
+    "InviteDB",
 )
 
 
@@ -369,3 +370,28 @@ class AfkDB:
 
     async def get_total_afk(self) -> int:
         return await self.collection.count_documents({})
+
+
+class InviteDB:
+    def __init__(self, client: "Mongo") -> None:
+        self.client = client
+        self.collection = client["data"]["invite"]
+        self.client.invite = self
+
+    async def add_invite(self, data: InviterData) -> None:
+        await self.collection.insert_one(data.get_payload())
+
+    async def get_invite(self, code: str) -> InviterData | None:
+        data = await self.collection.find_one({"invite_code": code}, {"_id": 0})
+        return InviterData(**data) if data else None
+
+    async def update_invite(self, code: str, data: InviterData) -> None:
+        await self.collection.update_one({"invite_code": code}, {"$set": data.get_payload()})
+
+    async def get_by_invite(self, user_id: int) -> InviterData | None:
+        data = await self.collection.find_one({"invited_users": {"$in": [user_id]}}, {"_id": 0})
+        return InviterData(**data) if data else None
+
+    async def get_all_invites(self, user_id: int) -> list[InviterData]:
+        data = await self.collection.find({"user_id": user_id}, {"_id": 0}).to_list(None)
+        return [InviterData(**invite) for invite in data]
