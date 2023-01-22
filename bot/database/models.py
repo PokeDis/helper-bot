@@ -225,7 +225,7 @@ class InviterData:
     user_id: int
     uses: int = 0
     left: int = 0
-    invited_users: list[int] = []
+    invited_users: list[int] = dataclasses.field(default_factory=list)
 
     def get_payload(self) -> dict[str, str | int | list[int]]:
         return {

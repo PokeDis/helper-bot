@@ -10,10 +10,9 @@ if typing.TYPE_CHECKING:
 
 
 class InviteTracker(commands.Cog):
-    def __init__(self, bot: PokeHelper) -> None:
+    def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot
         self.invite_map: dict[str, int] = {}
-        super().__init__()
 
     async def get_current_invites_map(self) -> dict[str, int]:
         guild = self.bot.get_guild(id_ := 998133764960039033) or await self.bot.fetch_guild(id_)
@@ -79,3 +78,7 @@ class InviteTracker(commands.Cog):
                     description=f"We were unable to figure out how {user} joined the server.",
                 )
             )
+
+
+async def setup(bot: "PokeHelper") -> None:
+    await bot.add_cog(InviteTracker(bot))
