@@ -28,7 +28,6 @@ class InviteTracker(commands.Cog):
     @commands.Cog.listener("on_invite_create")
     async def add_invite_code(self, invite: discord.Invite) -> None:
         data = InviterData(invite_code=invite.code, user_id=invite.inviter.id)
-
         await self.bot.db.invites.add_invite(data)
 
     @commands.Cog.listener("on_member_join")
@@ -38,6 +37,7 @@ class InviteTracker(commands.Cog):
         new_invite = [code for code, uses in new_data.items() if new_data[code] != older_data.get(code)]
         if not new_invite:
             return
+        data: InviterData | None = None
         inviter = await self.bot.db.invites.get_by_invite(member.id)
         if inviter:
             _rejoin = True
@@ -53,15 +53,16 @@ class InviteTracker(commands.Cog):
             left_users = sum([inv.left for inv in invite_data_list])
             if (invites := total_invites - left_users) % self.INVITE_STREAK_GAP == 0:
                 self.bot.dispatch("invite_streak", invites // self.INVITE_STREAK_GAP, data.user_id)
+        invitee = inviter or data
         await self.bot.get_partial_messageable(1012229238415433768).send(
             embed=discord.Embed(
-                description=f"`{member}` ({member.id}) was invited by <@{data.user_id}> ({data.user_id}) (rejoin: {_rejoin})"
+                description=f"`{member}` ({member.id}) was invited by <@{invitee.user_id}> ({invitee.user_id}) (rejoin: {_rejoin})"
             )
         )
 
     @commands.Cog.listener()
-    async def on_invite_streak(self, streak: int, user_id: int) -> None:
-        user = self.bot.get_channel(user_id) or await self.bot.fetch_channel(user_id)
+    async def on_invite_streak(self, _streak: int, user_id: int) -> None:
+        await self.bot.db.add_redeem(user_id)
 
     @commands.Cog.listener("on_member_remove")
     async def remove_invite(self, member: discord.Member) -> None:

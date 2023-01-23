@@ -13,6 +13,8 @@ if t.TYPE_CHECKING:
 
 
 class Afk(commands.Cog):
+    a
+
     def __init__(self, bot: "PokeHelper") -> None:
         self.bot = bot
         self.afks: list[UserAfk] = []
